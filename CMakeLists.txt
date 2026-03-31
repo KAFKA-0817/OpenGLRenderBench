@@ -9,6 +9,7 @@ find_package(glm CONFIG REQUIRED)
 find_package(assimp CONFIG REQUIRED)
 
 add_subdirectory("external/glad")
+add_subdirectory("external/stb_image")
 
 add_executable(PBRRenderer main.cpp
         src/core/file_io.hpp
@@ -46,8 +47,6 @@ add_executable(PBRRenderer main.cpp
         src/renderer/asset/Texture2D.cpp
         src/renderer/asset/Texture2D.hpp
         src/renderer/pipeline/RenderPass.hpp
-        src/renderer/pipeline/ScenePass.cpp
-        src/renderer/pipeline/ScenePass.hpp
         src/renderer/pipeline/PresentPass.cpp
         src/renderer/pipeline/PresentPass.hpp
         src/renderer/pipeline/NormalPass.cpp
@@ -61,6 +60,8 @@ add_executable(PBRRenderer main.cpp
         src/renderer/pipeline/LightingPass.hpp
         src/renderer/pipeline/ForwardPass.cpp
         src/renderer/pipeline/ForwardPass.hpp
+        src/renderer/material/ForwardMaterial.hpp
+        src/renderer/material/DeferredMaterial.hpp
 )
 
 target_link_libraries(PBRRenderer PRIVATE
@@ -68,4 +69,5 @@ target_link_libraries(PBRRenderer PRIVATE
         glad
         glm::glm
         assimp::assimp
+        stb_image
 )

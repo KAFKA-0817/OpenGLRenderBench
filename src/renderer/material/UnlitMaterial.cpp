@@ -7,7 +7,7 @@
 
 namespace renderer {
     UnlitMaterial::UnlitMaterial(Shader& shader)
-        :Material(shader)
+        :ForwardMaterial(shader)
     {
 
     }

@@ -40,11 +40,7 @@ int main()
         core::ProjectPaths::shader("blinn_phong.fs")
     );
     BlinnPhongMaterial blinn_phong_material(blinn_phong_shader);
-    Shader pbr_shader(
-        core::ProjectPaths::shader("pbr.vs"),
-        core::ProjectPaths::shader("pbr.fs")
-    );
-    PBRMaterial pbr_material(pbr_shader);
+    PBRMaterial pbr_material;
 
     Renderer renderer(width,height);
     PerspectiveCamera camera;
@@ -76,7 +72,6 @@ int main()
 
             unlit_shader.reload();
             blinn_phong_shader.reload();
-            pbr_shader.reload();
         }
         reload_key_pressed_last_frame = reload_key_pressed;
 

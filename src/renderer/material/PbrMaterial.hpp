@@ -4,19 +4,16 @@
 
 #ifndef PBRRENDERER_PBRMATERIAL_HPP
 #define PBRRENDERER_PBRMATERIAL_HPP
+#include "DeferredMaterial.hpp"
 #include "Material.hpp"
 #include "../core/Shader.hpp"
 #include "../camera/Camera.hpp"
 #include "../asset/Texture2D.hpp"
 
 namespace renderer {
-    class PBRMaterial: public Material {
+    class PBRMaterial: public DeferredMaterial {
     public:
-        PBRMaterial(Shader& shader);
-
-        void bind(const glm::mat4& model,
-                  const Camera& camera,
-                  const RenderContext& context) const override;
+        PBRMaterial()=default;
         RenderPath renderPath() const noexcept override { return RenderPath::Deferred; }
 
         void setAlbedo(const glm::vec3& albedo) noexcept { albedo_ = albedo; }

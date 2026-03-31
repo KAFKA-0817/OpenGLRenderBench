@@ -9,7 +9,6 @@
 #include "GBufferPass.hpp"
 #include "NormalPass.hpp"
 #include "PresentPass.hpp"
-#include "ScenePass.hpp"
 #include "../../core/opengl.hpp"
 #include "../asset/Model.hpp"
 #include "../core/Shader.hpp"

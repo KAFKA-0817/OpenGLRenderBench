@@ -6,7 +6,7 @@
 
 namespace renderer {
     BlinnPhongMaterial::BlinnPhongMaterial(Shader& shader)
-    : Material(shader)
+    : ForwardMaterial(shader)
     {}
 
     void BlinnPhongMaterial::bind(const glm::mat4& model,

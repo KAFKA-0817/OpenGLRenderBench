@@ -4,12 +4,12 @@
 
 #ifndef PBRRENDERER_UNLITMATERIAL_HPP
 #define PBRRENDERER_UNLITMATERIAL_HPP
-#include "Material.hpp"
+#include "ForwardMaterial.hpp"
 #include "../core/Shader.hpp"
 #include "../asset/Texture2D.hpp"
 
 namespace renderer {
-    class UnlitMaterial: public Material {
+    class UnlitMaterial: public ForwardMaterial {
     public:
         explicit UnlitMaterial(Shader& shader);
 

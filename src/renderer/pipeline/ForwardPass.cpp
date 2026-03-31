@@ -3,6 +3,7 @@
 //
 
 #include "ForwardPass.hpp"
+#include "../material/ForwardMaterial.hpp"
 
 namespace renderer {
 
@@ -24,7 +25,12 @@ namespace renderer {
                 continue;
             }
 
-            item.material->bind(item.model_matrix, camera, render_context);
+            auto* material = dynamic_cast<const ForwardMaterial*>(item.material);
+            if (!material) {
+                continue;
+            }
+
+            material->bind(item.model_matrix, camera, render_context);
             item.model->draw();
         }
 

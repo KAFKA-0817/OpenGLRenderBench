@@ -8,7 +8,6 @@
 #include <glm/ext/matrix_float4x4.hpp>
 
 #include "../../core/noncopyable.hpp"
-#include "../core/Shader.hpp"
 #include "../camera/Camera.hpp"
 
 namespace renderer {
@@ -27,21 +26,12 @@ namespace renderer {
 
     class Material : public core::NonCopyable {
     public:
-        explicit Material(Shader& shader) : shader_(shader) {}
+        Material()=default;
         virtual ~Material() = default;
         Material(Material&&) = delete;
         Material& operator=(Material&&) = delete;
 
-        virtual void bind(const glm::mat4& model,
-                          const Camera& camera,
-                          const RenderContext& context) const = 0;
         virtual RenderPath renderPath() const noexcept = 0;
-
-        Shader& shader() noexcept { return shader_; }
-        const Shader& shader() const noexcept { return shader_; }
-
-    protected:
-        Shader& shader_;
     };
 }
 
