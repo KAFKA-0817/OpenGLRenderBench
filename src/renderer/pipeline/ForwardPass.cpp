@@ -1,0 +1,34 @@
+//
+// Created by kaede on 2026/3/30.
+//
+
+#include "ForwardPass.hpp"
+
+namespace renderer {
+
+    void ForwardPass::execute(const std::vector<RenderItem>& forward_items,
+                          const Camera& camera,
+                          RenderContext& render_context,
+                          const FrameBuffer& target_framebuffer)
+    {
+        glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 3, -1, "Forward Pass");
+
+        target_framebuffer.bind();
+        glViewport(0, 0, target_framebuffer.width(), target_framebuffer.height());
+        glEnable(GL_DEPTH_TEST);
+
+        render_context.camera_position = camera.position();
+
+        for (const auto& item : forward_items) {
+            if (!item.model || !item.material) {
+                continue;
+            }
+
+            item.material->bind(item.model_matrix, camera, render_context);
+            item.model->draw();
+        }
+
+        target_framebuffer.unbind();
+        glPopDebugGroup();
+    }
+} // renderer
