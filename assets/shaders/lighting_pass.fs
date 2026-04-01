@@ -12,6 +12,7 @@ uniform sampler2D u_GPosition;
 uniform sampler2D u_GNormal;
 uniform sampler2D u_GAlbedo;
 uniform sampler2D u_GMaterial;
+uniform sampler2D u_GEmissive;
 
 uniform Light u_Light;
 uniform vec3 u_ViewPos;
@@ -54,6 +55,7 @@ void main() {
     vec3 normal = texture(u_GNormal, vTexCoord).rgb * 2.0 - 1.0;
     vec3 albedo = texture(u_GAlbedo, vTexCoord).rgb;
     vec3 material = texture(u_GMaterial, vTexCoord).rgb;
+    vec3 emissive = texture(u_GEmissive, vTexCoord).rgb;
 
     float metallic = material.r;
     float roughness = clamp(material.g, 0.04, 1.0);
@@ -83,8 +85,16 @@ void main() {
     vec3 radiance = u_Light.color;
 
     vec3 Lo = (kD * albedo / PI + specular) * radiance * NdotL;
-    vec3 ambient = 0.03 * albedo * ao;
 
-    vec3 color = ambient + Lo;
+    float hemi = N.y * 0.5 + 0.5;
+    vec3 skyColor = vec3(0.10, 0.12, 0.16);
+    vec3 groundColor = vec3(0.13, 0.13, 0.13);
+    vec3 hemiLight = mix(groundColor, skyColor, hemi);
+    vec3 ambient = hemiLight * albedo * ao;
+
+    vec3 color = ambient + Lo + emissive;
+    color = vec3(1.0) - exp(-color * 1.0);
+    color = pow(color, vec3(1.0 / 2.2));
+
     FragColor = vec4(color, 1.0);
 }

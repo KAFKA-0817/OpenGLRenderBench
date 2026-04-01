@@ -5,11 +5,17 @@
 #ifndef PBRRENDERER_MODEL_HPP
 #define PBRRENDERER_MODEL_HPP
 #include <vector>
+#include <glm/ext/matrix_float4x4.hpp>
 
 #include "Mesh.hpp"
 #include "../../core/noncopyable.hpp"
 
 namespace renderer {
+    struct SubMesh {
+        Mesh mesh;
+        int material_index = -1;
+    };
+
     class Model :public core::NonCopyable {
     public:
         Model() = default;
@@ -18,10 +24,11 @@ namespace renderer {
         Model& operator=(Model&& other) noexcept = default;
 
         void draw() const;
-        void add_mesh(Mesh mesh);
+        void add_mesh(Mesh mesh, int material_index = -1);
         bool empty() const { return meshes_.empty(); }
+        const std::vector<SubMesh>& meshes() const noexcept { return meshes_; }
     private:
-        std::vector<Mesh> meshes_;
+        std::vector<SubMesh> meshes_;
     };
 }
 

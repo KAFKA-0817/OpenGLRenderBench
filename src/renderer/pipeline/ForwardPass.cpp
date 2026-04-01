@@ -21,7 +21,7 @@ namespace renderer {
         render_context.camera_position = camera.position();
 
         for (const auto& item : forward_items) {
-            if (!item.model || !item.material) {
+            if (!item.mesh || !item.material) {
                 continue;
             }
 
@@ -31,7 +31,7 @@ namespace renderer {
             }
 
             material->bind(item.model_matrix, camera, render_context);
-            item.model->draw();
+            item.mesh->draw();
         }
 
         target_framebuffer.unbind();

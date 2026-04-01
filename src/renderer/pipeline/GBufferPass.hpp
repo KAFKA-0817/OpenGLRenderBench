@@ -27,6 +27,7 @@ namespace renderer {
         GLuint gNormal() const noexcept { return framebuffer_.colorAttachment(1); }
         GLuint gAlbedo() const noexcept { return framebuffer_.colorAttachment(2); }
         GLuint gMaterial() const noexcept { return framebuffer_.colorAttachment(3); }
+        GLuint gEmissive() const noexcept { return framebuffer_.colorAttachment(4); }
 
         int width() const noexcept { return framebuffer_.width(); }
         int height() const noexcept { return framebuffer_.height(); }

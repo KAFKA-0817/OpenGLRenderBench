@@ -19,11 +19,11 @@ namespace renderer {
         gbuffer_pass_.resize(width, height);
     }
 
-    void Renderer::submit(const Model& model,
+    void Renderer::submit(const Mesh& mesh,
                       const Material& material,
                       const glm::mat4& model_matrix) {
         RenderItem item{
-            &model,
+            &mesh,
             &material,
             model_matrix
         };
@@ -42,17 +42,19 @@ namespace renderer {
     GLuint Renderer::currentPreviewTexture() const noexcept {
         switch (preview_mode_) {
             case PreviewMode::FinalScene:
-            return lighting_pass_.colorAttachment();
+                return lighting_pass_.colorAttachment();
             case PreviewMode::GPosition:
-            return gbuffer_pass_.gPosition();
+                return gbuffer_pass_.gPosition();
             case PreviewMode::GNormal:
-            return gbuffer_pass_.gNormal();
+                return gbuffer_pass_.gNormal();
             case PreviewMode::GAlbedo:
-            return gbuffer_pass_.gAlbedo();
+                return gbuffer_pass_.gAlbedo();
             case PreviewMode::GMaterial:
-            return gbuffer_pass_.gMaterial();
+                return gbuffer_pass_.gMaterial();
+            case PreviewMode::GEmissive:
+                return gbuffer_pass_.gEmissive();
             default:
-            return lighting_pass_.colorAttachment();
+                return lighting_pass_.colorAttachment();
         }
     }
 
@@ -66,6 +68,7 @@ namespace renderer {
             gbuffer_pass_.gNormal(),
             gbuffer_pass_.gAlbedo(),
             gbuffer_pass_.gMaterial(),
+            gbuffer_pass_.gEmissive(),
             render_context_
         );
 

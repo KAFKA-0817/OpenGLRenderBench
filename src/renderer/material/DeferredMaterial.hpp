@@ -4,7 +4,6 @@
 
 #ifndef PBRRENDERER_DEFERREDMATERIAL_HPP
 #define PBRRENDERER_DEFERREDMATERIAL_HPP
-#include <windows.h>
 
 #include "Material.hpp"
 

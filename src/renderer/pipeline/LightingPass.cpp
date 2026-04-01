@@ -25,6 +25,7 @@ namespace renderer {
                            GLuint g_normal,
                            GLuint g_albedo,
                            GLuint g_material,
+                           GLuint g_emissive,
                            const RenderContext& context) {
         glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 2, -1, "Lighting Pass");
 
@@ -55,6 +56,10 @@ namespace renderer {
         glActiveTexture(GL_TEXTURE3);
         glBindTexture(GL_TEXTURE_2D, g_material);
         shader_.setInt("u_GMaterial", 3);
+
+        glActiveTexture(GL_TEXTURE4);
+        glBindTexture(GL_TEXTURE_2D, g_emissive);
+        shader_.setInt("u_GEmissive", 4);
 
         screen_quad_.draw();
 

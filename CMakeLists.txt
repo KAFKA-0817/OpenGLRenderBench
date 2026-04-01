@@ -10,6 +10,7 @@ find_package(assimp CONFIG REQUIRED)
 
 add_subdirectory("external/glad")
 add_subdirectory("external/stb_image")
+add_subdirectory("external/tinygltf")
 
 add_executable(PBRRenderer main.cpp
         src/core/file_io.hpp
@@ -62,6 +63,13 @@ add_executable(PBRRenderer main.cpp
         src/renderer/pipeline/ForwardPass.hpp
         src/renderer/material/ForwardMaterial.hpp
         src/renderer/material/DeferredMaterial.hpp
+        src/renderer/asset/importer/ImportedModelData.hpp
+        src/renderer/asset/Vertex.hpp
+        src/renderer/asset/importer/RuntimeModelAsset.hpp
+        src/renderer/asset/importer/GltfImporter.cpp
+        src/renderer/asset/importer/GltfImporter.hpp
+        src/renderer/asset/importer/RuntimeAssetBuilder.cpp
+        src/renderer/asset/importer/RuntimeAssetBuilder.hpp
 )
 
 target_link_libraries(PBRRenderer PRIVATE
@@ -70,4 +78,5 @@ target_link_libraries(PBRRenderer PRIVATE
         glm::glm
         assimp::assimp
         stb_image
+        tinygltf
 )

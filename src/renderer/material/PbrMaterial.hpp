@@ -11,42 +11,50 @@
 #include "../asset/Texture2D.hpp"
 
 namespace renderer {
-    class PBRMaterial: public DeferredMaterial {
+    class PBRMaterial : public DeferredMaterial {
     public:
-        PBRMaterial()=default;
+        PBRMaterial() = default;
         RenderPath renderPath() const noexcept override { return RenderPath::Deferred; }
 
-        void setAlbedo(const glm::vec3& albedo) noexcept { albedo_ = albedo; }
-        void setMetallic(float metallic) noexcept { metallic_ = metallic; }
-        void setRoughness(float roughness) noexcept { roughness_ = roughness; }
-        void setAo(float ao) noexcept { ao_ = ao; }
-        const glm::vec3& albedo() const noexcept { return albedo_; }
-        float metallic() const noexcept { return metallic_; }
-        float roughness() const noexcept { return roughness_; }
-        float ao() const noexcept { return ao_; }
+        void setBaseColorFactor(const glm::vec4& value) noexcept { base_color_factor_ = value; }
+        void setMetallicFactor(float value) noexcept { metallic_factor_ = value; }
+        void setRoughnessFactor(float value) noexcept { roughness_factor_ = value; }
+        void setNormalScale(float value) noexcept { normal_scale_ = value; }
+        void setOcclusionStrength(float value) noexcept { occlusion_strength_ = value; }
+        void setEmissiveFactor(const glm::vec3& value) noexcept { emissive_factor_ = value; }
 
-        void setAlbedoMap(const Texture2D* texture) noexcept { albedo_map_ = texture; }
-        void setMetallicMap(const Texture2D* texture) noexcept { metallic_map_ = texture; }
-        void setRoughnessMap(const Texture2D* texture) noexcept { roughness_map_ = texture; }
-        void setAoMap(const Texture2D* texture) noexcept { ao_map_ = texture; }
+        const glm::vec4& baseColorFactor() const noexcept { return base_color_factor_; }
+        float metallicFactor() const noexcept { return metallic_factor_; }
+        float roughnessFactor() const noexcept { return roughness_factor_; }
+        float normalScale() const noexcept { return normal_scale_; }
+        float occlusionStrength() const noexcept { return occlusion_strength_; }
+        const glm::vec3& emissiveFactor() const noexcept { return emissive_factor_; }
+
+        void setBaseColorMap(const Texture2D* texture) noexcept { base_color_map_ = texture; }
+        void setMetallicRoughnessMap(const Texture2D* texture) noexcept { metallic_roughness_map_ = texture; }
         void setNormalMap(const Texture2D* texture) noexcept { normal_map_ = texture; }
-        const Texture2D* albedoMap() const noexcept { return albedo_map_; }
-        const Texture2D* metallicMap() const noexcept { return metallic_map_; }
-        const Texture2D* roughnessMap() const noexcept { return roughness_map_; }
-        const Texture2D* aoMap() const noexcept { return ao_map_; }
+        void setOcclusionMap(const Texture2D* texture) noexcept { occlusion_map_ = texture; }
+        void setEmissiveMap(const Texture2D* texture) noexcept { emissive_map_ = texture; }
+
+        const Texture2D* baseColorMap() const noexcept { return base_color_map_; }
+        const Texture2D* metallicRoughnessMap() const noexcept { return metallic_roughness_map_; }
         const Texture2D* normalMap() const noexcept { return normal_map_; }
+        const Texture2D* occlusionMap() const noexcept { return occlusion_map_; }
+        const Texture2D* emissiveMap() const noexcept { return emissive_map_; }
 
     private:
-        glm::vec3 albedo_{1.0f, 1.0f, 1.0f};
-        float metallic_ = 0.0f;
-        float roughness_ = 0.5f;
-        float ao_ = 1.0f;
+        glm::vec4 base_color_factor_{1.0f, 1.0f, 1.0f, 1.0f};
+        float metallic_factor_ = 1.0f;
+        float roughness_factor_ = 1.0f;
+        float normal_scale_ = 1.0f;
+        float occlusion_strength_ = 1.0f;
+        glm::vec3 emissive_factor_{0.0f, 0.0f, 0.0f};
 
-        const Texture2D* albedo_map_ = nullptr;
-        const Texture2D* metallic_map_ = nullptr;
-        const Texture2D* roughness_map_ = nullptr;
-        const Texture2D* ao_map_ = nullptr;
+        const Texture2D* base_color_map_ = nullptr;
+        const Texture2D* metallic_roughness_map_ = nullptr;
         const Texture2D* normal_map_ = nullptr;
+        const Texture2D* occlusion_map_ = nullptr;
+        const Texture2D* emissive_map_ = nullptr;
     };
 }
 

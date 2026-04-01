@@ -25,6 +25,19 @@ namespace renderer {
         static Texture2D createBlack1x1();
         static Texture2D createFlatNormal1x1();
 
+        static Texture2D createFromPixels(const unsigned char* pixels,
+                                          int width,
+                                          int height,
+                                          int channels,
+                                          bool srgb);
+
+        static Texture2D createFromChannel(const unsigned char* pixels,
+                                           int width,
+                                           int height,
+                                           int channels,
+                                           int channel_index);
+
+
     private:
         void destroy() noexcept;
 

@@ -9,11 +9,13 @@
 
 
 namespace renderer {
+
     struct RenderItem {
-        const Model* model = nullptr;
+        const Mesh* mesh = nullptr;
         const Material* material = nullptr;
         glm::mat4 model_matrix{1.0f};
     };
+
 }
 
 #endif //PBRRENDERER_RENDERITEM_HPP

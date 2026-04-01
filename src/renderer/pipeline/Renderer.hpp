@@ -24,8 +24,10 @@ namespace renderer {
         GPosition = 1,
         GNormal = 2,
         GAlbedo = 3,
-        GMaterial = 4
+        GMaterial = 4,
+        GEmissive = 5
     };
+
 
     class Renderer : public core::NonCopyable {
     public:
@@ -44,7 +46,7 @@ namespace renderer {
         RenderContext& renderContext() noexcept { return render_context_; }
         const RenderContext& renderContext() const noexcept { return render_context_; }
 
-        void submit(const Model& model,
+        void submit(const Mesh& mesh,
                 const Material& material,
                 const glm::mat4& model_matrix);
         void clearSubmissions();

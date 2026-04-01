@@ -22,6 +22,7 @@ namespace renderer {
                      GLuint g_normal,
                      GLuint g_albedo,
                      GLuint g_material,
+                     GLuint g_emissive,
                      const RenderContext& context);
 
         const FrameBuffer& framebuffer() const noexcept { return framebuffer_; }

@@ -32,12 +32,12 @@ namespace renderer {
         shader_.setMat4("u_Projection", camera.getProjectionMatrix());
 
         for (const auto& item : items) {
-            if (!item.model) {
+            if (!item.mesh) {
                 continue;
             }
 
             shader_.setMat4("u_Model", item.model_matrix);
-            item.model->draw();
+            item.mesh->draw();
         }
 
         framebuffer_.unbind();
