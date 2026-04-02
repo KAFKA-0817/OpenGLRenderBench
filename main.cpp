@@ -4,6 +4,7 @@
 #include "src/renderer/asset/Model.hpp"
 #include "src/core/opengl.hpp"
 #include "src/core/path.hpp"
+#include "src/core/ThreadPool.hpp"
 #include "src/renderer/asset/AssetManager.hpp"
 #include "src/renderer/asset/PrimitiveFactory.hpp"
 #include "src/renderer/asset/importer/GltfImporter.hpp"
@@ -40,14 +41,17 @@ int main()
     BlinnPhongMaterial blinn_phong_material(blinn_phong_shader);
     blinn_phong_material.setAlbedo(glm::vec3(0.2f, 0.4f, 1.0f));
 
+
     // const auto gltf_path = core::ProjectPaths::model("ABeautifulGame\\ABeautifulGame.gltf");
     // const auto gltf_path = core::ProjectPaths::model("Lantern.glb");
-    const auto gltf_path = core::ProjectPaths::model("BoomBox.glb");
+    // const auto gltf_path = core::ProjectPaths::model("BoomBox.glb");
+    const auto gltf_path = core::ProjectPaths::model("2CylinderEngine.glb");
     AssetManager asset_manager;
-    Model& model = asset_manager.loadModel(gltf_path);
-    std::cout << "[Import] glTF loaded: " << gltf_path << '\n';
-    std::cout << "[Import] submeshes: " << model.meshes().size() << '\n';
-    std::cout << "[Import] materials: " << model.materials().size() << '\n';
+    Model* model = &asset_manager.loadModel(gltf_path);
+    // std::cout << "[Import] glTF loaded: " << gltf_path << '\n';
+    // std::cout << "[Import] submeshes: " << model.meshes().size() << '\n';
+    // std::cout << "[Import] materials: " << model.materials().size() << '\n';
+    // asset_manager.requestModel(gltf_path);
 
     Renderer renderer(width,height);
     PerspectiveCamera camera;
@@ -62,6 +66,7 @@ int main()
     bool key_6_last_frame = false;
     while (!window.should_close())
     {
+        asset_manager.pumpUploads();
         window.poll_events();
         controller.update();
         const int current_width = window.width();
@@ -115,18 +120,20 @@ int main()
         // world = glm::rotate(world, angle, glm::vec3(0.0f, 1.0f, 0.0f));
         // world = glm::rotate(world, angle, glm::vec3(1.0f, 0.0f, 0.0f));
         // world = glm::rotate(world, angle, glm::vec3(0.0f, 0.0f, 1.0f));
-        world = glm::scale(world, glm::vec3(30.0f));
+        world = glm::scale(world, glm::vec3(7.0f));
 
-        for (const auto& submesh : model.meshes()) {
-            if (submesh.material_index < 0 || submesh.material_index >= static_cast<int>(model.materials().size())) {
-                continue;
+        // Model* model = asset_manager.tryGetModel(gltf_path);
+        if (model !=nullptr) {
+            for (const auto& submesh : model->meshes()) {
+                if (submesh.material_index < 0 || submesh.material_index >= static_cast<int>(model->materials().size())) {
+                    continue;
+                }
+
+                const Material& material = *model->materials()[submesh.material_index];
+
+                renderer.submit(submesh.mesh, material, world);
             }
-
-            const Material& material = *model.materials()[submesh.material_index];
-
-            renderer.submit(submesh.mesh, material, world);
         }
-
 
         glm::mat4 debug_transform = glm::mat4(1.0f);
         debug_transform = glm::translate(debug_transform, glm::vec3(2.0f, 0.0f, 0.0f));

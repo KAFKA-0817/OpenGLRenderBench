@@ -74,6 +74,8 @@ add_executable(PBRRenderer main.cpp
         src/renderer/camera/OrbitController.hpp
         src/renderer/asset/AssetManager.cpp
         src/renderer/asset/AssetManager.hpp
+        src/core/ThreadPool.cpp
+        src/core/ThreadPool.hpp
 )
 
 target_link_libraries(PBRRenderer PRIVATE
