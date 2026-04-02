@@ -8,8 +8,10 @@ layout(location = 4) out vec4 gEmissive;
 
 in VS_OUT {
     vec3 FragPos;
-    vec3 Normal;
     vec2 TexCoord;
+    vec3 T;
+    vec3 B;
+    vec3 N;
 } fs_in;
 
 struct MaterialData {
@@ -27,6 +29,9 @@ struct MaterialData {
     int hasNormalMap;
     int hasOcclusionMap;
     int hasEmissiveMap;
+
+    int alphaMode;      // 0=OPAQUE, 1=MASK, 2=BLEND
+    float alphaCutoff;
 };
 
 uniform MaterialData u_Material;
@@ -45,6 +50,10 @@ void main() {
         vec4 baseSample = texture(u_BaseColorMap, fs_in.TexCoord);
         baseColor *= baseSample.rgb;
         alpha *= baseSample.a;
+    }
+
+    if (u_Material.alphaMode == 1 && alpha < u_Material.alphaCutoff) {
+        discard;
     }
 
     float metallic = u_Material.metallicFactor;
@@ -66,9 +75,19 @@ void main() {
         emissive *= texture(u_EmissiveMap, fs_in.TexCoord).rgb;
     }
 
-    vec3 N = normalize(fs_in.Normal);
-    // 这里先保留 normal map 接口，但当前没有 TBN，暂不实际应用扰动
-    // 以后补 tangent-space normal mapping 时再接入 u_NormalMap + u_Material.normalScale
+    vec3 N = normalize(fs_in.N);
+
+    if (u_Material.hasNormalMap == 1) {
+        vec3 tangentNormal = texture(u_NormalMap, fs_in.TexCoord).xyz * 2.0 - 1.0;
+        tangentNormal.xy *= u_Material.normalScale;
+
+        vec3 T = normalize(fs_in.T);
+        vec3 B = normalize(fs_in.B);
+        vec3 NN = normalize(fs_in.N);
+        mat3 TBN = mat3(T, B, NN);
+
+        N = normalize(TBN * tangentNormal);
+    }
 
     gPosition = vec4(fs_in.FragPos, 1.0);
     gNormal = vec4(N * 0.5 + 0.5, 1.0);

@@ -9,9 +9,9 @@
 namespace renderer {
     class PrimitiveFactory {
     public:
-        static Model createCube();
-        static Model createQuad();
-        static Model createTriangle();
+        static Mesh createCube();
+        static Mesh createQuad();
+        static Mesh createTriangle();
     };
 }
 

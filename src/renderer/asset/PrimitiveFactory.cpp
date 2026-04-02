@@ -5,7 +5,7 @@
 #include "PrimitiveFactory.hpp"
 
 namespace renderer {
-    Model PrimitiveFactory::createCube() {
+    Mesh PrimitiveFactory::createCube() {
         std::vector<Vertex> vertices(24);
 
         // front (+z)
@@ -95,12 +95,11 @@ namespace renderer {
             20,21,22, 20,22,23
         };
 
-        Model model;
-        model.add_mesh(Mesh(vertices, indices));
-        return model;
+        Mesh mesh(vertices,indices);
+        return mesh;
     }
 
-    Model PrimitiveFactory::createQuad() {
+    Mesh PrimitiveFactory::createQuad() {
         std::vector<Vertex> vertices(4);
 
         vertices[0].position = {-1.0f, -1.0f, 0.0f};
@@ -108,18 +107,16 @@ namespace renderer {
         vertices[2].position = { 1.0f,  1.0f, 0.0f};
         vertices[3].position = {-1.0f,  1.0f, 0.0f};
 
-
         std::vector<unsigned int> indices = {
             0, 1, 2,
             0, 2, 3
         };
 
-        Model model;
-        model.add_mesh(Mesh(vertices, indices));
-        return model;
+        Mesh mesh(vertices,indices);
+        return mesh;
     }
 
-    Model PrimitiveFactory::createTriangle() {
+    Mesh PrimitiveFactory::createTriangle() {
         std::vector<Vertex> vertices(3);
 
         vertices[0].position = {-0.5f, -0.5f, 0.0f};
@@ -128,8 +125,7 @@ namespace renderer {
 
         std::vector<unsigned int> indices = {0, 1, 2};
 
-        Model model;
-        model.add_mesh(Mesh(vertices, indices));
-        return model;
+        Mesh mesh(vertices,indices);
+        return mesh;
     }
 }

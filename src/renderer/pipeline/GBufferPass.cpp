@@ -59,6 +59,15 @@ namespace renderer {
             pbr_gbuffer_shader_.setInt("u_Material.hasOcclusionMap", pbr->occlusionMap() ? 1 : 0);
             pbr_gbuffer_shader_.setInt("u_Material.hasEmissiveMap", pbr->emissiveMap() ? 1 : 0);
 
+            int alpha_mode = 0;
+            switch (pbr->alphaMode()) {
+                case AlphaMode::Opaque: alpha_mode = 0; break;
+                case AlphaMode::Mask:   alpha_mode = 1; break;
+                case AlphaMode::Blend:  alpha_mode = 2; break;
+            }
+            pbr_gbuffer_shader_.setInt("u_Material.alphaMode", alpha_mode);
+            pbr_gbuffer_shader_.setFloat("u_Material.alphaCutoff", pbr->alphaCutoff());
+
             if (pbr->baseColorMap()) {
                 pbr->baseColorMap()->bind(0);
                 pbr_gbuffer_shader_.setInt("u_BaseColorMap", 0);
@@ -80,9 +89,18 @@ namespace renderer {
                 pbr_gbuffer_shader_.setInt("u_EmissiveMap", 4);
             }
 
+            if (pbr->doubleSided()) {
+                glDisable(GL_CULL_FACE);
+            } else {
+                glEnable(GL_CULL_FACE);
+                glCullFace(GL_BACK);
+            }
+
             item.mesh->draw();
         }
 
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
         framebuffer_.unbind();
         glPopDebugGroup();
     }

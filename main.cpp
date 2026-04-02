@@ -1,9 +1,10 @@
-#include <iostream>
+﻿#include <iostream>
 
 #include "src/renderer/core/FrameBuffer.hpp"
 #include "src/renderer/asset/Model.hpp"
 #include "src/core/opengl.hpp"
 #include "src/core/path.hpp"
+#include "src/renderer/asset/AssetManager.hpp"
 #include "src/renderer/asset/PrimitiveFactory.hpp"
 #include "src/renderer/asset/importer/GltfImporter.hpp"
 #include "src/renderer/asset/importer/RuntimeAssetBuilder.hpp"
@@ -12,6 +13,7 @@
 #include "src/renderer/core/Shader.hpp"
 #include "src/renderer/core/Window.hpp"
 #include "src/renderer/camera/Camera.hpp"
+#include "src/renderer/camera/OrbitController.hpp"
 #include "src/renderer/camera/PerspectiveCamera.hpp"
 #include "src/renderer/material/BlinnPhongMaterial.hpp"
 #include "src/renderer/material/PbrMaterial.hpp"
@@ -30,7 +32,7 @@ int main()
     core::OpenGLContext::enableDebugOutput();
     glViewport(0,0,window.width(),window.height());
 
-    Model debug_cube_model = PrimitiveFactory::createCube();
+    Mesh debug_cube_model = PrimitiveFactory::createCube();
     Shader blinn_phong_shader(
         core::ProjectPaths::shader("blinn_phong.vs"),
         core::ProjectPaths::shader("blinn_phong.fs")
@@ -39,16 +41,17 @@ int main()
     blinn_phong_material.setAlbedo(glm::vec3(0.2f, 0.4f, 1.0f));
 
     // const auto gltf_path = core::ProjectPaths::model("ABeautifulGame\\ABeautifulGame.gltf");
-    const auto gltf_path = core::ProjectPaths::model("Lantern.glb");
-    auto imported = GltfImporter::import_model_from_file(gltf_path);
-    auto runtime_asset = RuntimeAssetBuilder::buildFromImported(imported);
+    // const auto gltf_path = core::ProjectPaths::model("Lantern.glb");
+    const auto gltf_path = core::ProjectPaths::model("BoomBox.glb");
+    AssetManager asset_manager;
+    Model& model = asset_manager.loadModel(gltf_path);
     std::cout << "[Import] glTF loaded: " << gltf_path << '\n';
-    std::cout << "[Import] submeshes: " << runtime_asset.model.meshes().size() << '\n';
-    std::cout << "[Import] materials: " << runtime_asset.materials.size() << '\n';
+    std::cout << "[Import] submeshes: " << model.meshes().size() << '\n';
+    std::cout << "[Import] materials: " << model.materials().size() << '\n';
 
     Renderer renderer(width,height);
     PerspectiveCamera camera;
-    camera.setPosition({0,0,3});
+    OrbitController controller(window.native_handle(),&camera);
 
     bool reload_key_pressed_last_frame = false;
     bool key_1_last_frame = false;
@@ -60,6 +63,7 @@ int main()
     while (!window.should_close())
     {
         window.poll_events();
+        controller.update();
         const int current_width = window.width();
         const int current_height = window.height();
 
@@ -107,34 +111,29 @@ int main()
         float time = static_cast<float>(glfwGetTime());
         float angle = glm::radians(45.0f) * time;
         glm::mat4 world = glm::mat4(1.0f);
-        world = glm::translate(world, glm::vec3(0.0f, -0.5f, 0.0f));
-        world = glm::rotate(world, angle, glm::vec3(0.0f, 1.0f, 0.0f));
+        world = glm::translate(world, glm::vec3(0.0f, 0.0f, 0.0f));
+        // world = glm::rotate(world, angle, glm::vec3(0.0f, 1.0f, 0.0f));
         // world = glm::rotate(world, angle, glm::vec3(1.0f, 0.0f, 0.0f));
         // world = glm::rotate(world, angle, glm::vec3(0.0f, 0.0f, 1.0f));
-        world = glm::scale(world, glm::vec3(0.07f));
+        world = glm::scale(world, glm::vec3(30.0f));
 
-        for (const auto& submesh : runtime_asset.model.meshes()) {
-            if (submesh.material_index < 0 ||
-                submesh.material_index >= static_cast<int>(runtime_asset.materials.size())) {
+        for (const auto& submesh : model.meshes()) {
+            if (submesh.material_index < 0 || submesh.material_index >= static_cast<int>(model.materials().size())) {
                 continue;
-                }
+            }
 
-            const Material& material = *runtime_asset.materials[submesh.material_index];
+            const Material& material = *model.materials()[submesh.material_index];
 
             renderer.submit(submesh.mesh, material, world);
         }
 
-        if (!debug_cube_model.meshes().empty()) {
-            glm::mat4 debug_transform = glm::mat4(1.0f);
-            debug_transform = glm::translate(debug_transform, glm::vec3(2.0f, 0.0f, 0.0f));
-            debug_transform = glm::rotate(debug_transform, glm::radians(35.0f),
-                                          glm::normalize(glm::vec3(1.0f, 1.0f, 0.0f)));
-            debug_transform = glm::scale(debug_transform, glm::vec3(0.5f));
 
-            for (const auto& submesh : debug_cube_model.meshes()) {
-                renderer.submit(submesh.mesh, blinn_phong_material, debug_transform);
-            }
-        }
+        glm::mat4 debug_transform = glm::mat4(1.0f);
+        debug_transform = glm::translate(debug_transform, glm::vec3(2.0f, 0.0f, 0.0f));
+        debug_transform = glm::rotate(debug_transform, glm::radians(35.0f),
+                                      glm::normalize(glm::vec3(1.0f, 1.0f, 0.0f)));
+        debug_transform = glm::scale(debug_transform, glm::vec3(0.5f));
+        renderer.submit(debug_cube_model,blinn_phong_material,debug_transform);
 
         renderer.renderFrame(camera);
 

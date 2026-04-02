@@ -15,6 +15,12 @@ namespace renderer {
         glm::vec3 tangent{0.f,0.f,0.f};
         glm::vec3 bitangent{0.f,0.f,0.f};
     };
+
+    enum class AlphaMode {
+        Opaque,
+        Mask,
+        Blend
+    };
 }
 
 #endif //PBRRENDERER_VERTEX_HPP

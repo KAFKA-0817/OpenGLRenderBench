@@ -6,6 +6,8 @@
 
 #include <stdexcept>
 
+#include "../../core/glfw_globals.hpp"
+
 namespace renderer {
     Window::Window(int width, int height, const std::string& title)
     : width_(width), height_(height)
@@ -17,7 +19,7 @@ namespace renderer {
             throw std::runtime_error("Failed to create GLFW window.");
         }
 
-        glfwSetWindowUserPointer(window_, this);
+        core::glfw_window_map[window_] = this;
         glfwSetFramebufferSizeCallback(window_, framebuffer_size_callback);
     }
 
@@ -33,7 +35,7 @@ namespace renderer {
         other.height_ = 0;
 
         if (window_) {
-            glfwSetWindowUserPointer(window_, this);
+            core::glfw_window_map[window_] = this;
             glfwSetFramebufferSizeCallback(window_, framebuffer_size_callback);
         }
     }
@@ -49,7 +51,7 @@ namespace renderer {
             other.height_ = 0;
 
             if (window_) {
-                glfwSetWindowUserPointer(window_, this);
+                core::glfw_window_map[window_] = this;
                 glfwSetFramebufferSizeCallback(window_, framebuffer_size_callback);
             }
         }
@@ -59,6 +61,7 @@ namespace renderer {
 
     void Window::destroy() noexcept {
         if (window_) {
+            core::glfw_window_map.erase(window_);
             glfwDestroyWindow(window_);
             window_ = nullptr;
         }
@@ -81,7 +84,7 @@ namespace renderer {
     }
 
     void Window::framebuffer_size_callback(GLFWwindow* window, int width, int height) {
-        auto self = static_cast<Window*>(glfwGetWindowUserPointer(window));
+        auto self = core::glfw_window_map[window];
         if (self) {
             self->width_ = width;
             self->height_ = height;

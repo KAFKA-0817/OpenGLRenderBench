@@ -14,12 +14,6 @@
 
 namespace renderer {
 
-    enum class AlphaMode {
-        Opaque,
-        Mask,
-        Blend
-    };
-
     struct ImageData {
         std::string name;
         int width = 0;

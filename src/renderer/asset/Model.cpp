@@ -9,9 +9,11 @@ namespace renderer {
         meshes_.push_back({std::move(mesh), material_index});
     }
 
-    void Model::draw() const {
-        for (const auto& mesh : meshes_) {
-            mesh.mesh.draw();
-        }
+    void Model::add_material(std::unique_ptr<Material> material) {
+        materials_.push_back(std::move(material));
+    }
+
+    void Model::add_texture(Texture2D texture) {
+        textures_.push_back(std::move(texture));
     }
 }

@@ -21,7 +21,7 @@ namespace renderer {
         const Shader& shader() const noexcept { return screen_shader_; }
 
     private:
-        Model screen_quad_;
+        Mesh screen_quad_;
         Shader screen_shader_;
     };
 } // renderer

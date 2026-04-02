@@ -9,8 +9,10 @@
 #include "../core/Shader.hpp"
 #include "../camera/Camera.hpp"
 #include "../asset/Texture2D.hpp"
+#include "../asset/Vertex.hpp"
 
 namespace renderer {
+
     class PBRMaterial : public DeferredMaterial {
     public:
         PBRMaterial() = default;
@@ -42,6 +44,14 @@ namespace renderer {
         const Texture2D* occlusionMap() const noexcept { return occlusion_map_; }
         const Texture2D* emissiveMap() const noexcept { return emissive_map_; }
 
+        void setAlphaMode(AlphaMode mode) noexcept { alpha_mode_ = mode; }
+        void setAlphaCutoff(float value) noexcept { alpha_cutoff_ = value; }
+        void setDoubleSided(bool value) noexcept { double_sided_ = value; }
+
+        AlphaMode alphaMode() const noexcept { return alpha_mode_; }
+        float alphaCutoff() const noexcept { return alpha_cutoff_; }
+        bool doubleSided() const noexcept { return double_sided_; }
+
     private:
         glm::vec4 base_color_factor_{1.0f, 1.0f, 1.0f, 1.0f};
         float metallic_factor_ = 1.0f;
@@ -49,6 +59,10 @@ namespace renderer {
         float normal_scale_ = 1.0f;
         float occlusion_strength_ = 1.0f;
         glm::vec3 emissive_factor_{0.0f, 0.0f, 0.0f};
+
+        AlphaMode alpha_mode_ = AlphaMode::Opaque;
+        float alpha_cutoff_ = 0.5f;
+        bool double_sided_ = false;
 
         const Texture2D* base_color_map_ = nullptr;
         const Texture2D* metallic_roughness_map_ = nullptr;

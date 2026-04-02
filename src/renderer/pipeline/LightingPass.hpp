@@ -35,7 +35,7 @@ namespace renderer {
 
     private:
         FrameBuffer framebuffer_;
-        Model screen_quad_;
+        Mesh screen_quad_;
         Shader shader_;
     };
 } // renderer

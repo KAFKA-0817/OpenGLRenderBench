@@ -17,6 +17,7 @@ namespace renderer {
 
     void Renderer::resize(int width, int height) {
         gbuffer_pass_.resize(width, height);
+        lighting_pass_.resize(width, height);
     }
 
     void Renderer::submit(const Mesh& mesh,

@@ -7,14 +7,9 @@
 #include "ForwardPass.hpp"
 #include "FragPosPass.hpp"
 #include "GBufferPass.hpp"
-#include "NormalPass.hpp"
 #include "PresentPass.hpp"
 #include "../../core/opengl.hpp"
-#include "../asset/Model.hpp"
-#include "../core/Shader.hpp"
 #include "../../core/noncopyable.hpp"
-#include "../camera/Camera.hpp"
-#include "../material/Material.hpp"
 #include "LightingPass.hpp"
 
 namespace renderer {

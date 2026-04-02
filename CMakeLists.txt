@@ -65,11 +65,15 @@ add_executable(PBRRenderer main.cpp
         src/renderer/material/DeferredMaterial.hpp
         src/renderer/asset/importer/ImportedModelData.hpp
         src/renderer/asset/Vertex.hpp
-        src/renderer/asset/importer/RuntimeModelAsset.hpp
         src/renderer/asset/importer/GltfImporter.cpp
         src/renderer/asset/importer/GltfImporter.hpp
         src/renderer/asset/importer/RuntimeAssetBuilder.cpp
         src/renderer/asset/importer/RuntimeAssetBuilder.hpp
+        src/core/glfw_globals.hpp
+        src/renderer/camera/OrbitController.cpp
+        src/renderer/camera/OrbitController.hpp
+        src/renderer/asset/AssetManager.cpp
+        src/renderer/asset/AssetManager.hpp
 )
 
 target_link_libraries(PBRRenderer PRIVATE
