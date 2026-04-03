@@ -77,17 +77,21 @@ void main() {
 
     vec3 N = normalize(fs_in.N);
 
-//     if (u_Material.hasNormalMap == 1) {
-//         vec3 tangentNormal = texture(u_NormalMap, fs_in.TexCoord).xyz * 2.0 - 1.0;
-//         tangentNormal.xy *= u_Material.normalScale;
-//
-//         vec3 T = normalize(fs_in.T);
-//         vec3 B = normalize(fs_in.B);
-//         vec3 NN = normalize(fs_in.N);
-//         mat3 TBN = mat3(T, B, NN);
-//
-//         N = normalize(TBN * tangentNormal);
-//     }
+    if (u_Material.hasNormalMap == 1) {
+        vec3 tangentNormal = texture(u_NormalMap, fs_in.TexCoord).xyz * 2.0 - 1.0;
+        tangentNormal.xy *= u_Material.normalScale;
+
+        float tangentLen = length(fs_in.T);
+        float bitangentLen = length(fs_in.B);
+        if (tangentLen > 1e-5 && bitangentLen > 1e-5) {
+            vec3 T = normalize(fs_in.T);
+            vec3 B = normalize(fs_in.B);
+            vec3 NN = normalize(fs_in.N);
+            mat3 TBN = mat3(T, B, NN);
+
+            N = normalize(TBN * tangentNormal);
+        }
+    }
 
     gPosition = vec4(fs_in.FragPos, 1.0);
     gNormal = vec4(N * 0.5 + 0.5, 1.0);

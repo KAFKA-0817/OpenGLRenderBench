@@ -42,16 +42,16 @@ int main()
     blinn_phong_material.setAlbedo(glm::vec3(0.2f, 0.4f, 1.0f));
 
 
-    // const auto gltf_path = core::ProjectPaths::model("ABeautifulGame\\ABeautifulGame.gltf");
+    const auto gltf_path = core::ProjectPaths::model("ABeautifulGame\\ABeautifulGame.gltf");
     // const auto gltf_path = core::ProjectPaths::model("Lantern.glb");
     // const auto gltf_path = core::ProjectPaths::model("BoomBox.glb");
-    const auto gltf_path = core::ProjectPaths::model("2CylinderEngine.glb");
+    // const auto gltf_path = core::ProjectPaths::model("2CylinderEngine.glb");
     AssetManager asset_manager;
-    Model* model = &asset_manager.loadModel(gltf_path);
+    // Model* model = &asset_manager.loadModel(gltf_path);
     // std::cout << "[Import] glTF loaded: " << gltf_path << '\n';
     // std::cout << "[Import] submeshes: " << model.meshes().size() << '\n';
     // std::cout << "[Import] materials: " << model.materials().size() << '\n';
-    // asset_manager.requestModel(gltf_path);
+    asset_manager.requestModel(gltf_path);
 
     Renderer renderer(width,height);
     PerspectiveCamera camera;
@@ -120,9 +120,9 @@ int main()
         // world = glm::rotate(world, angle, glm::vec3(0.0f, 1.0f, 0.0f));
         // world = glm::rotate(world, angle, glm::vec3(1.0f, 0.0f, 0.0f));
         // world = glm::rotate(world, angle, glm::vec3(0.0f, 0.0f, 1.0f));
-        world = glm::scale(world, glm::vec3(7.0f));
+        world = glm::scale(world, glm::vec3(3.0f));
 
-        // Model* model = asset_manager.tryGetModel(gltf_path);
+        Model* model = asset_manager.tryGetModel(gltf_path);
         if (model !=nullptr) {
             for (const auto& submesh : model->meshes()) {
                 if (submesh.material_index < 0 || submesh.material_index >= static_cast<int>(model->materials().size())) {

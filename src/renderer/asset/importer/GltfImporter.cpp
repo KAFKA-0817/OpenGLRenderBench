@@ -4,6 +4,9 @@
 
 #include "GltfImporter.hpp"
 
+#include <cmath>
+#include <limits>
+
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/quaternion_float.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -213,6 +216,81 @@ namespace renderer {
             }
         }
 
+        void generateTangents(SubmeshData& submesh) {
+            if (submesh.vertices.empty() || submesh.indices.size() < 3) {
+                return;
+            }
+
+            for (size_t i = 0; i + 2 < submesh.indices.size(); i += 3) {
+                const unsigned int i0 = submesh.indices[i];
+                const unsigned int i1 = submesh.indices[i + 1];
+                const unsigned int i2 = submesh.indices[i + 2];
+
+                if (i0 >= submesh.vertices.size() ||
+                    i1 >= submesh.vertices.size() ||
+                    i2 >= submesh.vertices.size()) {
+                    continue;
+                }
+
+                Vertex& v0 = submesh.vertices[i0];
+                Vertex& v1 = submesh.vertices[i1];
+                Vertex& v2 = submesh.vertices[i2];
+
+                const glm::vec3 edge1 = v1.position - v0.position;
+                const glm::vec3 edge2 = v2.position - v0.position;
+                const glm::vec2 delta_uv1 = v1.texCoord - v0.texCoord;
+                const glm::vec2 delta_uv2 = v2.texCoord - v0.texCoord;
+
+                const float determinant = delta_uv1.x * delta_uv2.y - delta_uv1.y * delta_uv2.x;
+                if (std::abs(determinant) <= std::numeric_limits<float>::epsilon()) {
+                    continue;
+                }
+
+                const float r = 1.0f / determinant;
+                const glm::vec3 tangent = (edge1 * delta_uv2.y - edge2 * delta_uv1.y) * r;
+                const glm::vec3 bitangent = (edge2 * delta_uv1.x - edge1 * delta_uv2.x) * r;
+
+                v0.tangent += tangent;
+                v1.tangent += tangent;
+                v2.tangent += tangent;
+
+                v0.bitangent += bitangent;
+                v1.bitangent += bitangent;
+                v2.bitangent += bitangent;
+            }
+
+            for (auto& vertex : submesh.vertices) {
+                const float tangent_len = glm::length(vertex.tangent);
+                if (tangent_len <= std::numeric_limits<float>::epsilon()) {
+                    const glm::vec3 fallback_axis =
+                        std::abs(vertex.normal.z) < 0.999f
+                            ? glm::vec3(0.0f, 0.0f, 1.0f)
+                            : glm::vec3(0.0f, 1.0f, 0.0f);
+                    vertex.tangent = glm::normalize(glm::cross(fallback_axis, vertex.normal));
+                } else {
+                    vertex.tangent = vertex.tangent / tangent_len;
+                }
+
+                vertex.tangent = glm::normalize(vertex.tangent - vertex.normal * glm::dot(vertex.normal, vertex.tangent));
+
+                const float bitangent_len = glm::length(vertex.bitangent);
+                if (bitangent_len <= std::numeric_limits<float>::epsilon()) {
+                    vertex.bitangent = glm::normalize(glm::cross(vertex.normal, vertex.tangent));
+                    continue;
+                }
+
+                glm::vec3 bitangent = vertex.bitangent / bitangent_len;
+                bitangent = glm::normalize(bitangent - vertex.normal * glm::dot(vertex.normal, bitangent));
+                bitangent = glm::normalize(bitangent - vertex.tangent * glm::dot(vertex.tangent, bitangent));
+
+                if (glm::dot(glm::cross(vertex.normal, vertex.tangent), bitangent) < 0.0f) {
+                    bitangent = -bitangent;
+                }
+
+                vertex.bitangent = bitangent;
+            }
+        }
+
         void importPrimitive(const tinygltf::Model& model, const tinygltf::Primitive& primitive, const glm::mat4& accumulated_transform, ImportedModelData& imported) {
             if (primitive.mode != TINYGLTF_MODE_TRIANGLES) {
                 throw std::runtime_error("Only triangle primitives are supported.");
@@ -228,15 +306,15 @@ namespace renderer {
             if (nor_it == primitive.attributes.end()) {
                 throw std::runtime_error("Primitive missing NORMAL.");
             }
-            if (uv_it == primitive.attributes.end()) {
-                throw std::runtime_error("Primitive missing TEXCOORD_0.");
-            }
             if (primitive.indices < 0) {
                 throw std::runtime_error("Primitive missing indices.");
             }
             const tinygltf::Accessor& pos_accessor = model.accessors.at(pos_it->second);
             const tinygltf::Accessor& nor_accessor = model.accessors.at(nor_it->second);
-            const tinygltf::Accessor& uv_accessor  = model.accessors.at(uv_it->second);
+            const tinygltf::Accessor* uv_accessor = nullptr;
+            if (uv_it != primitive.attributes.end()) {
+                uv_accessor = &model.accessors.at(uv_it->second);
+            }
             const tinygltf::Accessor* tan_accessor = nullptr;
             if (tan_it != primitive.attributes.end()) {
                 tan_accessor = &model.accessors.at(tan_it->second);
@@ -252,7 +330,10 @@ namespace renderer {
 
                 glm::vec3 position = readVec3At(model, pos_accessor, v);
                 glm::vec3 normal   = readVec3At(model, nor_accessor, v);
-                glm::vec2 uv       = readVec2At(model, uv_accessor, v);
+                glm::vec2 uv(0.0f);
+                if (uv_accessor != nullptr) {
+                    uv = readVec2At(model, *uv_accessor, v);
+                }
 
                 glm::vec4 tangent4(0.0f);
                 bool has_tangent = tan_accessor != nullptr;
@@ -281,6 +362,10 @@ namespace renderer {
             submesh.indices.resize(index_accessor.count);
             for (size_t i = 0; i < index_accessor.count; ++i) {
                 submesh.indices[i] = readIndexAt(model, index_accessor, i);
+            }
+
+            if (tan_accessor == nullptr && uv_accessor != nullptr) {
+                generateTangents(submesh);
             }
 
             imported.submeshes.push_back(std::move(submesh));
