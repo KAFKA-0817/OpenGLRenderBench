@@ -22,7 +22,7 @@ namespace renderer {
         return normalized.string();
     }
 
-    Model& AssetManager::loadModel(const std::filesystem::path& path) {
+    Model* AssetManager::loadModel(const std::filesystem::path& path) {
         std::string key = normalizePathKey(path);
 
         if (model_cache_.find(key) == model_cache_.end()) {
@@ -34,7 +34,7 @@ namespace renderer {
             };
         }
 
-        return *model_cache_[key].model;
+        return model_cache_[key].model.get();
     }
 
     void AssetManager::unloadModel(const std::filesystem::path& path) {

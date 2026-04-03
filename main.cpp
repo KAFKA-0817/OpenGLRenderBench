@@ -47,7 +47,7 @@ int main()
     // const auto gltf_path = core::ProjectPaths::model("BoomBox.glb");
     // const auto gltf_path = core::ProjectPaths::model("2CylinderEngine.glb");
     AssetManager asset_manager;
-    // Model* model = &asset_manager.loadModel(gltf_path);
+    // Model* model = asset_manager.loadModel(gltf_path);
     // std::cout << "[Import] glTF loaded: " << gltf_path << '\n';
     // std::cout << "[Import] submeshes: " << model.meshes().size() << '\n';
     // std::cout << "[Import] materials: " << model.materials().size() << '\n';

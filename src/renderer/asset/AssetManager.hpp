@@ -36,7 +36,7 @@ namespace renderer {
         AssetManager(AssetManager&&) = delete;
         AssetManager& operator=(AssetManager&&) = delete;
 
-        Model& loadModel(const std::filesystem::path& path);
+        Model* loadModel(const std::filesystem::path& path);
         void unloadModel(const std::filesystem::path& path);
         void clear();
 
