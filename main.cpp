@@ -5,6 +5,8 @@
 #include "src/core/opengl.hpp"
 #include "src/core/path.hpp"
 #include "src/core/ThreadPool.hpp"
+#include "src/editor/scene/RenderSystem.hpp"
+#include "src/editor/scene/Scene.hpp"
 #include "src/renderer/asset/AssetManager.hpp"
 #include "src/renderer/asset/PrimitiveFactory.hpp"
 #include "src/renderer/asset/importer/GltfImporter.hpp"
@@ -33,25 +35,32 @@ int main()
     core::OpenGLContext::enableDebugOutput();
     glViewport(0,0,window.width(),window.height());
 
-    Mesh debug_cube_model = PrimitiveFactory::createCube();
-    Shader blinn_phong_shader(
-        core::ProjectPaths::shader("blinn_phong.vs"),
-        core::ProjectPaths::shader("blinn_phong.fs")
-    );
-    BlinnPhongMaterial blinn_phong_material(blinn_phong_shader);
-    blinn_phong_material.setAlbedo(glm::vec3(0.2f, 0.4f, 1.0f));
-
-
+    AssetManager asset_manager;
     const auto gltf_path = core::ProjectPaths::model("ABeautifulGame\\ABeautifulGame.gltf");
     // const auto gltf_path = core::ProjectPaths::model("Lantern.glb");
     // const auto gltf_path = core::ProjectPaths::model("BoomBox.glb");
     // const auto gltf_path = core::ProjectPaths::model("2CylinderEngine.glb");
-    AssetManager asset_manager;
     // Model* model = asset_manager.loadModel(gltf_path);
     // std::cout << "[Import] glTF loaded: " << gltf_path << '\n';
     // std::cout << "[Import] submeshes: " << model.meshes().size() << '\n';
     // std::cout << "[Import] materials: " << model.materials().size() << '\n';
     asset_manager.requestModel(gltf_path);
+    editor::Scene scene;
+    editor::Entity aBeautifulGame = scene.createEntity();
+    scene.addName(aBeautifulGame,{"aBeautifulGame"});
+
+    Mesh debug_cube_mesh = PrimitiveFactory::createCube();
+    Shader blinn_phong_shader(
+        core::ProjectPaths::shader("blinn_phong.vs"),
+        core::ProjectPaths::shader("blinn_phong.fs")
+    );
+    std::unique_ptr blinn_phong_material = std::make_unique<BlinnPhongMaterial>(blinn_phong_shader);
+    blinn_phong_material->setAlbedo(glm::vec3(0.2f, 0.4f, 1.0f));
+    Model debug_cube_model;
+    debug_cube_model.add_material(std::move(blinn_phong_material));
+    debug_cube_model.add_mesh(std::move(debug_cube_mesh),0);
+    editor::Entity debug_cube = scene.createEntity();
+    scene.addName(debug_cube,{"debug_cube"});
 
     Renderer renderer(width,height);
     PerspectiveCamera camera;
@@ -122,26 +131,32 @@ int main()
         // world = glm::rotate(world, angle, glm::vec3(0.0f, 0.0f, 1.0f));
         world = glm::scale(world, glm::vec3(3.0f));
 
+        scene.addTransform(aBeautifulGame,{
+            glm::vec3(0.0f, 0.0f, 0.0f),
+            glm::vec3(0.0f, 0.0f, 0.0f),
+            glm::vec3(3.0f)
+        });
+
         Model* model = asset_manager.tryGetModel(gltf_path);
         if (model !=nullptr) {
-            for (const auto& submesh : model->meshes()) {
-                if (submesh.material_index < 0 || submesh.material_index >= static_cast<int>(model->materials().size())) {
-                    continue;
-                }
-
-                const Material& material = *model->materials()[submesh.material_index];
-
-                renderer.submit(submesh.mesh, material, world);
-            }
+            scene.addMeshRenderer(aBeautifulGame,{model,true});
         }
+
 
         glm::mat4 debug_transform = glm::mat4(1.0f);
         debug_transform = glm::translate(debug_transform, glm::vec3(2.0f, 0.0f, 0.0f));
         debug_transform = glm::rotate(debug_transform, glm::radians(35.0f),
                                       glm::normalize(glm::vec3(1.0f, 1.0f, 0.0f)));
         debug_transform = glm::scale(debug_transform, glm::vec3(0.5f));
-        renderer.submit(debug_cube_model,blinn_phong_material,debug_transform);
+        scene.addTransform(debug_cube,{
+            glm::vec3(2.0f, 0.0f, 0.0f),
+            glm::vec3(35.0f, 35.0f, 0.0f),
+            glm::vec3(0.5f)
+        });
+        scene.addMeshRenderer(debug_cube,{&debug_cube_model,true});
+        // renderer.submit(debug_cube_model,blinn_phong_material,debug_transform);
 
+        editor::RenderSystem::renderScene(renderer,scene);
         renderer.renderFrame(camera);
 
         window.swap_buffers();

@@ -50,10 +50,12 @@ namespace renderer {
         auto key = normalizePathKey(path);
         std::lock_guard lock(model_cache_mutex_);
 
-        if (model_cache_.find(key)!=model_cache_.end()) {
-            auto& record = model_cache_[key];
-            if (record.state == ModelState::Ready || !record.model)
+        auto it = model_cache_.find(key);
+        if (it != model_cache_.end()) {
+            auto& record = it->second;
+            if (record.state == ModelState::Ready && record.model) {
                 return record.model.get();
+            }
         }
 
         return nullptr;

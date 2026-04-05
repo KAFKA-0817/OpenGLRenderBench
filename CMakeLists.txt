@@ -76,6 +76,12 @@ add_executable(PBRRenderer main.cpp
         src/renderer/asset/AssetManager.hpp
         src/core/ThreadPool.cpp
         src/core/ThreadPool.hpp
+        src/editor/scene/Entity.hpp
+        src/editor/scene/Components.hpp
+        src/editor/scene/Scene.cpp
+        src/editor/scene/Scene.hpp
+        src/editor/scene/RenderSystem.hpp
+        src/editor/scene/RenderSystem.cpp
 )
 
 target_link_libraries(PBRRenderer PRIVATE
