@@ -4,11 +4,11 @@
 
 #ifndef PBRRENDERER_SCENE_HPP
 #define PBRRENDERER_SCENE_HPP
-#include <unordered_map>
 #include <vector>
 
 #include "Components.hpp"
 #include "Entity.hpp"
+#include "SparseSet.hpp"
 #include "../../core/noncopyable.hpp"
 
 namespace editor {
@@ -43,10 +43,11 @@ namespace editor {
     private:
         Entity next_entity_ = -1;
         std::vector<Entity> entities_;
+        std::vector<int> entity_sparse_;
 
-        std::unordered_map<Entity,NameComponent> names_;
-        std::unordered_map<Entity,TransformComponent> transforms_;
-        std::unordered_map<Entity,MeshRendererComponent> meshes_;
+        SparseSet<NameComponent> nameComponents_;
+        SparseSet<TransformComponent> transformComponents_;
+        SparseSet<MeshRendererComponent> meshRendererComponents_;
     };
 } // editor
 

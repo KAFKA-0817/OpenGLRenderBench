@@ -11,6 +11,7 @@ find_package(assimp CONFIG REQUIRED)
 add_subdirectory("external/glad")
 add_subdirectory("external/stb_image")
 add_subdirectory("external/tinygltf")
+add_subdirectory("external/imgui")
 
 add_executable(PBRRenderer main.cpp
         src/core/file_io.hpp
@@ -82,6 +83,10 @@ add_executable(PBRRenderer main.cpp
         src/editor/scene/Scene.hpp
         src/editor/scene/RenderSystem.hpp
         src/editor/scene/RenderSystem.cpp
+        src/editor/scene/SparseSet.hpp
+        src/editor/EditorUi.cpp
+        src/editor/EditorUi.hpp
+        src/editor/EditorState.hpp
 )
 
 target_link_libraries(PBRRenderer PRIVATE
@@ -91,4 +96,5 @@ target_link_libraries(PBRRenderer PRIVATE
         assimp::assimp
         stb_image
         tinygltf
+        imgui
 )
