@@ -243,11 +243,13 @@ namespace editor {
 
             ImGui::DragFloat3("Position", &transform->position.x, 0.1f);
             ImGui::DragFloat3("Rotation", &transform->rotation.x, 0.5f);
-            ImGui::DragFloat3("Scale", &transform->scale.x, 0.05f);
-
-            if (transform->scale.x < 0.001f) transform->scale.x = 0.001f;
-            if (transform->scale.y < 0.001f) transform->scale.y = 0.001f;
-            if (transform->scale.z < 0.001f) transform->scale.z = 0.001f;
+            float uniform_scale = transform->scale.x;
+            if (ImGui::DragFloat("Scale", &uniform_scale, 0.05f)) {
+                if (uniform_scale < 0.001f) {
+                    uniform_scale = 0.001f;
+                }
+                transform->scale = glm::vec3(uniform_scale);
+            }
         }
 
         if (auto* mesh_renderer = scene_.tryGetMeshRenderer(entity)) {
@@ -264,9 +266,38 @@ namespace editor {
                 ImGui::EndPopup();
             }
             ImGui::Checkbox("Visible", &mesh_renderer->visible);
+            const auto ready_models = assetManager_.getReadyModels();
+
+            std::string current_model_label = "None";
+            for (const auto& entry : ready_models) {
+                if (entry.model == mesh_renderer->model) {
+                    current_model_label = entry.name;
+                    break;
+                }
+            }
+            if (mesh_renderer->model && current_model_label == "None") {
+                current_model_label = "Bound";
+            }
+            if (ImGui::BeginCombo("Model", current_model_label.c_str())) {
+                if (ImGui::Selectable("None", mesh_renderer->model == nullptr)) {
+                    mesh_renderer->model = nullptr;
+                }
+
+                for (const auto& entry : ready_models) {
+                    const bool selected = (entry.model == mesh_renderer->model);
+                    if (ImGui::Selectable(entry.name.c_str(), selected)) {
+                        mesh_renderer->model = entry.model;
+                    }
+
+                    if (selected) {
+                        ImGui::SetItemDefaultFocus();
+                    }
+                }
+
+                ImGui::EndCombo();
+            }
 
             if (mesh_renderer->model) {
-                ImGui::Text("Model: bound");
                 ImGui::Text("Submeshes: %d", static_cast<int>(mesh_renderer->model->meshes().size()));
                 ImGui::Text("Materials: %d", static_cast<int>(mesh_renderer->model->materials().size()));
             } else {

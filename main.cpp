@@ -59,11 +59,14 @@ int main()
 
 
     AssetManager asset_manager;
-    const auto gltf_path = core::ProjectPaths::model("ABeautifulGame\\ABeautifulGame.gltf");
+    // const auto gltf_path = core::ProjectPaths::model("ABeautifulGame\\ABeautifulGame.gltf");
     // const auto gltf_path = core::ProjectPaths::model("Lantern.glb");
     // const auto gltf_path = core::ProjectPaths::model("BoomBox.glb");
     // const auto gltf_path = core::ProjectPaths::model("2CylinderEngine.glb");
-    asset_manager.requestModel(gltf_path);
+    asset_manager.requestModel(core::ProjectPaths::model("ABeautifulGame\\ABeautifulGame.gltf"));
+    asset_manager.requestModel(core::ProjectPaths::model("Lantern.glb"));
+    asset_manager.requestModel(core::ProjectPaths::model("BoomBox.glb"));
+
     editor::Scene scene;
     editor::Entity aBeautifulGame = scene.createEntity();
     scene.addName(aBeautifulGame,{"aBeautifulGame"});
@@ -97,7 +100,7 @@ int main()
     PerspectiveCamera camera;
     OrbitController controller(window.native_handle(),&camera);
 
-    editor::EditorUI editor_ui(scene, renderer);
+    editor::EditorUI editor_ui(scene, renderer,asset_manager);
 
     bool reload_key_pressed_last_frame = false;
     bool key_1_last_frame = false;
@@ -159,17 +162,6 @@ int main()
         key_6_last_frame = key_6;
 
         renderer.clearSubmissions();
-
-
-        Model* model = asset_manager.tryGetModel(gltf_path);
-        if (model !=nullptr) {
-            auto mr = scene.tryGetMeshRenderer(aBeautifulGame);
-            if (mr) {
-                mr->model = model;
-            }else {
-                scene.addMeshRenderer(aBeautifulGame,{model,true});
-            }
-        }
 
         editor::RenderSystem::renderScene(renderer,scene);
         renderer.renderFrame(camera);

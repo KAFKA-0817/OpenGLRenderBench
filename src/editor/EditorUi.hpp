@@ -6,6 +6,7 @@
 #define PBRRENDERER_EDITORUI_HPP
 #include "EditorState.hpp"
 #include "../core/noncopyable.hpp"
+#include "../renderer/asset/AssetManager.hpp"
 #include "../renderer/pipeline/Renderer.hpp"
 #include "scene/Scene.hpp"
 
@@ -13,7 +14,7 @@ namespace editor {
 
 class EditorUI : public core::NonCopyable{
 public:
-    EditorUI(Scene& scene, renderer::Renderer& renderer):scene_(scene),renderer_(renderer){}
+    EditorUI(Scene& scene, renderer::Renderer& renderer, renderer::AssetManager& assetManager):scene_(scene),renderer_(renderer),assetManager_(assetManager){}
     ~EditorUI() = default;
     EditorUI(EditorUI&& other) noexcept = delete;
     EditorUI& operator=(EditorUI&& other) noexcept = delete;
@@ -33,6 +34,7 @@ private:
     EditorState state_;
     Scene& scene_;
     renderer::Renderer& renderer_;
+    const renderer::AssetManager& assetManager_;
 
     bool dockspace_initialized_ = false;
 

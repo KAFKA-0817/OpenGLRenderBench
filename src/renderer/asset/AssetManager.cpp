@@ -46,6 +46,21 @@ namespace renderer {
         model_cache_.clear();
     }
 
+    std::vector<AssetManager::ReadyModelView> AssetManager::getReadyModels() const{
+        std::vector<ReadyModelView> result;
+        {
+            std::lock_guard lock(model_cache_mutex_);
+            result.reserve(model_cache_.size());
+            for (const auto& [key, model] : model_cache_) {
+                std::filesystem::path path(key);
+                if (model.state==ModelState::Ready && model.model) {
+                    result.push_back({path.stem().string(),model.model.get()});
+                }
+            }
+        }
+        return result;
+    }
+
     Model* AssetManager::tryGetModel(const std::filesystem::path& path) {
         auto key = normalizePathKey(path);
         std::lock_guard lock(model_cache_mutex_);

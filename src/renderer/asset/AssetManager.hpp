@@ -44,14 +44,22 @@ namespace renderer {
         void requestModel(const std::filesystem::path& path);
         void pumpUploads();
 
+    public:
+        struct ReadyModelView {
+            std::string name;
+            Model* model;
+        };
+
+        std::vector<ReadyModelView> getReadyModels() const;
+
     private:
         static std::string normalizePathKey(const std::filesystem::path& path);
+
     private:
-        //若以值对象存储cache，触发rehash时对象地址可能不稳定
         core::ThreadPool thread_pool_;
 
         std::unordered_map<std::string,ModelRecord> model_cache_;
-        std::mutex model_cache_mutex_;
+        mutable std::mutex model_cache_mutex_;
         std::queue<std::pair<std::string,ImportedModelData>> imported_queue_;
         std::mutex imported_queue_mutex_;
     };
