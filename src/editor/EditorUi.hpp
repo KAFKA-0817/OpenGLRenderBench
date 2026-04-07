@@ -6,13 +6,14 @@
 #define PBRRENDERER_EDITORUI_HPP
 #include "EditorState.hpp"
 #include "../core/noncopyable.hpp"
+#include "../renderer/pipeline/Renderer.hpp"
 #include "scene/Scene.hpp"
 
 namespace editor {
 
 class EditorUI : public core::NonCopyable{
 public:
-    EditorUI(Scene& scene):scene_(scene){}
+    EditorUI(Scene& scene, renderer::Renderer& renderer):scene_(scene),renderer_(renderer){}
     ~EditorUI() = default;
     EditorUI(EditorUI&& other) noexcept = delete;
     EditorUI& operator=(EditorUI&& other) noexcept = delete;
@@ -31,7 +32,19 @@ private:
 private:
     EditorState state_;
     Scene& scene_;
+    renderer::Renderer& renderer_;
+
+    bool dockspace_initialized_ = false;
+
+    Entity rename_target_ = kInvalidEntity;
+    std::string rename_buffer_;
 };
+
+    enum class ComponentRemoveRequest {
+        Name,
+        Transform,
+        MeshRenderer
+    };
 
 } // editor
 

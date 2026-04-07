@@ -9,11 +9,12 @@
 
 namespace editor {
     Entity Scene::createEntity() {
-        ++next_entity_;
         entities_.emplace_back(next_entity_);
 
         if (next_entity_ >= entity_sparse_.size()) entity_sparse_.resize(next_entity_ + 1,-1);
         entity_sparse_[next_entity_] = entities_.size()-1;
+
+        ++next_entity_;
         return entities_.back();
     }
 

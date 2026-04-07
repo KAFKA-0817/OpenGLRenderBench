@@ -27,6 +27,9 @@ namespace editor {
         NameComponent& addName(Entity entity, NameComponent component = {});
         TransformComponent& addTransform(Entity entity, TransformComponent component = {});
         MeshRendererComponent& addMeshRenderer(Entity entity, MeshRendererComponent component = {});
+        void removeName(Entity entity) { nameComponents_.remove(entity); }
+        void removeTransform(Entity entity) { transformComponents_.remove(entity); }
+        void removeMeshRenderer(Entity entity) { meshRendererComponents_.remove(entity); }
 
         bool hasName(Entity entity) const;
         bool hasTransform(Entity entity) const;
@@ -41,7 +44,7 @@ namespace editor {
         const MeshRendererComponent* tryGetMeshRenderer(Entity entity) const;
 
     private:
-        Entity next_entity_ = -1;
+        Entity next_entity_ = 1;
         std::vector<Entity> entities_;
         std::vector<int> entity_sparse_;
 

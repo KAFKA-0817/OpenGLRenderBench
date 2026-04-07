@@ -80,9 +80,12 @@ namespace renderer {
                               render_context_,
                               lighting_pass_.framebuffer());
 
-        present_pass_.present(currentPreviewTexture(),
+        if (present_to_screen_enabled_) {
+            present_pass_.present(currentPreviewTexture(),
                               width(),
                               height());
+        }
+
     }
 
     void Renderer::reloadBuiltinShaders() {

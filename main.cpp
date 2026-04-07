@@ -22,6 +22,11 @@
 #include "src/renderer/material/PbrMaterial.hpp"
 #include "src/renderer/material/UnlitMaterial.hpp"
 
+#include "imgui.h"
+#include "backends/imgui_impl_opengl3.h"
+#include "backends/imgui_impl_glfw.h"
+#include "src/editor/EditorUi.hpp"
+
 using namespace renderer;
 
 int main()
@@ -35,19 +40,38 @@ int main()
     core::OpenGLContext::enableDebugOutput();
     glViewport(0,0,window.width(),window.height());
 
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    (void)io;
+
+    // 开启 Docking
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+    // 你如果以后想多 viewport，再开这个
+    // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+
+    ImGui::StyleColorsDark();
+
+    ImGui_ImplGlfw_InitForOpenGL(window.native_handle(), true);
+    ImGui_ImplOpenGL3_Init("#version 410");
+
+
+
     AssetManager asset_manager;
     const auto gltf_path = core::ProjectPaths::model("ABeautifulGame\\ABeautifulGame.gltf");
     // const auto gltf_path = core::ProjectPaths::model("Lantern.glb");
     // const auto gltf_path = core::ProjectPaths::model("BoomBox.glb");
     // const auto gltf_path = core::ProjectPaths::model("2CylinderEngine.glb");
-    // Model* model = asset_manager.loadModel(gltf_path);
-    // std::cout << "[Import] glTF loaded: " << gltf_path << '\n';
-    // std::cout << "[Import] submeshes: " << model.meshes().size() << '\n';
-    // std::cout << "[Import] materials: " << model.materials().size() << '\n';
     asset_manager.requestModel(gltf_path);
     editor::Scene scene;
     editor::Entity aBeautifulGame = scene.createEntity();
     scene.addName(aBeautifulGame,{"aBeautifulGame"});
+    scene.addTransform(aBeautifulGame,{
+            glm::vec3(0.0f, 0.0f, 0.0f),
+            glm::vec3(0.0f, 0.0f, 0.0f),
+            glm::vec3(3.0f)
+        });
 
     Mesh debug_cube_mesh = PrimitiveFactory::createCube();
     Shader blinn_phong_shader(
@@ -61,10 +85,19 @@ int main()
     debug_cube_model.add_mesh(std::move(debug_cube_mesh),0);
     editor::Entity debug_cube = scene.createEntity();
     scene.addName(debug_cube,{"debug_cube"});
+    scene.addTransform(debug_cube,{
+        glm::vec3(2.0f, 0.0f, 0.0f),
+        glm::vec3(35.0f, 35.0f, 0.0f),
+        glm::vec3(0.5f)
+    });
+    scene.addMeshRenderer(debug_cube,{&debug_cube_model,true});
 
     Renderer renderer(width,height);
+    renderer.setPresentToScreenEnabled(false);
     PerspectiveCamera camera;
     OrbitController controller(window.native_handle(),&camera);
+
+    editor::EditorUI editor_ui(scene, renderer);
 
     bool reload_key_pressed_last_frame = false;
     bool key_1_last_frame = false;
@@ -77,16 +110,21 @@ int main()
     {
         asset_manager.pumpUploads();
         window.poll_events();
-        controller.update();
-        const int current_width = window.width();
-        const int current_height = window.height();
 
-        if (current_width > 0 && current_height > 0 &&
-            (current_width != renderer.width() || current_height != renderer.height()))
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        const auto viewport_size = editor_ui.state().viewport_size;
+        if (viewport_size.x > 0 && viewport_size.y > 0 &&
+            (viewport_size.x != renderer.width() || viewport_size.y != renderer.height()))
         {
-            renderer.resize(current_width, current_height);
-            camera.setAspect(static_cast<float>(current_width) / static_cast<float>(current_height));
-            glViewport(0, 0, current_width, current_height);
+            renderer.resize(viewport_size.x, viewport_size.y);
+            camera.setAspect(static_cast<float>(viewport_size.x) / static_cast<float>(viewport_size.y));
+        }
+
+        if (editor_ui.state().viewport_hovered || editor_ui.state().viewport_focused) {
+            controller.update();
         }
 
         bool reload_key_pressed = glfwGetKey(window.native_handle(), GLFW_KEY_R) == GLFW_PRESS;
@@ -122,45 +160,31 @@ int main()
 
         renderer.clearSubmissions();
 
-        float time = static_cast<float>(glfwGetTime());
-        float angle = glm::radians(45.0f) * time;
-        glm::mat4 world = glm::mat4(1.0f);
-        world = glm::translate(world, glm::vec3(0.0f, 0.0f, 0.0f));
-        // world = glm::rotate(world, angle, glm::vec3(0.0f, 1.0f, 0.0f));
-        // world = glm::rotate(world, angle, glm::vec3(1.0f, 0.0f, 0.0f));
-        // world = glm::rotate(world, angle, glm::vec3(0.0f, 0.0f, 1.0f));
-        world = glm::scale(world, glm::vec3(3.0f));
-
-        scene.addTransform(aBeautifulGame,{
-            glm::vec3(0.0f, 0.0f, 0.0f),
-            glm::vec3(0.0f, 0.0f, 0.0f),
-            glm::vec3(3.0f)
-        });
 
         Model* model = asset_manager.tryGetModel(gltf_path);
         if (model !=nullptr) {
-            scene.addMeshRenderer(aBeautifulGame,{model,true});
+            auto mr = scene.tryGetMeshRenderer(aBeautifulGame);
+            if (mr) {
+                mr->model = model;
+            }else {
+                scene.addMeshRenderer(aBeautifulGame,{model,true});
+            }
         }
-
-
-        glm::mat4 debug_transform = glm::mat4(1.0f);
-        debug_transform = glm::translate(debug_transform, glm::vec3(2.0f, 0.0f, 0.0f));
-        debug_transform = glm::rotate(debug_transform, glm::radians(35.0f),
-                                      glm::normalize(glm::vec3(1.0f, 1.0f, 0.0f)));
-        debug_transform = glm::scale(debug_transform, glm::vec3(0.5f));
-        scene.addTransform(debug_cube,{
-            glm::vec3(2.0f, 0.0f, 0.0f),
-            glm::vec3(35.0f, 35.0f, 0.0f),
-            glm::vec3(0.5f)
-        });
-        scene.addMeshRenderer(debug_cube,{&debug_cube_model,true});
-        // renderer.submit(debug_cube_model,blinn_phong_material,debug_transform);
 
         editor::RenderSystem::renderScene(renderer,scene);
         renderer.renderFrame(camera);
 
+        editor_ui.draw();
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
         window.swap_buffers();
     }
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 
     return 0;
 }

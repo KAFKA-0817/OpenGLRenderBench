@@ -34,7 +34,8 @@ namespace renderer {
         void resize(int width, int height);
         int width() const noexcept { return gbuffer_pass_.width(); }
         int height() const noexcept { return gbuffer_pass_.height(); }
-
+        void setPresentToScreenEnabled(bool enabled) noexcept { present_to_screen_enabled_ = enabled; }
+        bool isPresentToScreenEnabled() const noexcept { return present_to_screen_enabled_; }
         void setClearColor(float r, float g, float b, float a) noexcept { clear_r_ = r; clear_g_ = g; clear_b_ = b; clear_a_ = a; }
         void setPreviewMode(PreviewMode mode) noexcept { preview_mode_ = mode; }
         PreviewMode previewMode() const noexcept { return preview_mode_; }
@@ -47,6 +48,7 @@ namespace renderer {
         void clearSubmissions();
         void renderFrame(const Camera& camera);
         void reloadBuiltinShaders();
+        GLuint outputTexture() const noexcept { return currentPreviewTexture(); }
 
     private:
         GLuint currentPreviewTexture() const noexcept;
@@ -57,6 +59,7 @@ namespace renderer {
         ForwardPass forward_pass_;
         PresentPass present_pass_;
 
+        bool present_to_screen_enabled_ = true;
         RenderContext render_context_{};
         std::vector<RenderItem> deferred_items_;
         std::vector<RenderItem> forward_items_;
