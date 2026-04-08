@@ -90,6 +90,7 @@ add_executable(PBRRenderer main.cpp
         src/editor/EditorUi.cpp
         src/editor/EditorUi.hpp
         src/editor/EditorState.hpp
+        src/app/frame/EditorCommandsFrame.hpp
         src/app/frame/RenderContextFrame.hpp
 )
 

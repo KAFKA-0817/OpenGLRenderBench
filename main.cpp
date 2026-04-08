@@ -12,6 +12,7 @@
 #include "src/renderer/asset/PrimitiveFactory.hpp"
 #include "src/renderer/asset/importer/GltfImporter.hpp"
 #include "src/renderer/asset/importer/RuntimeAssetBuilder.hpp"
+#include "src/app/frame/EditorCommandsFrame.hpp"
 #include "src/app/frame/RenderContextFrame.hpp"
 #include "src/renderer/pipeline/Renderer.hpp"
 
@@ -101,20 +102,13 @@ int main()
     scene.addMeshRenderer(debug_cube,{&debug_cube_model,true});
 
     Renderer renderer(width,height);
+    app::EditorCommandsFrame editor_commands_frame;
     RenderContextFrame render_context_frame;
     renderer.setPresentToScreenEnabled(false);
     PerspectiveCamera camera;
     OrbitController controller(window.native_handle(),&camera);
 
-    editor::EditorUI editor_ui(scene, renderer,asset_manager);
-
-    bool reload_key_pressed_last_frame = false;
-    bool key_1_last_frame = false;
-    bool key_2_last_frame = false;
-    bool key_3_last_frame = false;
-    bool key_4_last_frame = false;
-    bool key_5_last_frame = false;
-    bool key_6_last_frame = false;
+    editor::EditorUI editor_ui(scene, renderer, asset_manager, editor_commands_frame);
     while (!window.should_close())
     {
         asset_manager.pumpUploads();
@@ -136,38 +130,8 @@ int main()
             controller.update();
         }
 
-        bool reload_key_pressed = glfwGetKey(window.native_handle(), GLFW_KEY_R) == GLFW_PRESS;
-        if (reload_key_pressed && !reload_key_pressed_last_frame) {
-            renderer.reloadBuiltinShaders();
-            blinn_phong_shader.reload();
-        }
-        reload_key_pressed_last_frame = reload_key_pressed;
-
-        bool key_1 = glfwGetKey(window.native_handle(), GLFW_KEY_1) == GLFW_PRESS;
-        if (key_1 && !key_1_last_frame) renderer.setPreviewMode(PreviewMode::FinalScene);
-        key_1_last_frame = key_1;
-
-        bool key_2 = glfwGetKey(window.native_handle(), GLFW_KEY_2) == GLFW_PRESS;
-        if (key_2 && !key_2_last_frame) renderer.setPreviewMode(PreviewMode::GPosition);
-        key_2_last_frame = key_2;
-
-        bool key_3 = glfwGetKey(window.native_handle(), GLFW_KEY_3) == GLFW_PRESS;
-        if (key_3 && !key_3_last_frame) renderer.setPreviewMode(PreviewMode::GNormal);
-        key_3_last_frame = key_3;
-
-        bool key_4 = glfwGetKey(window.native_handle(), GLFW_KEY_4) == GLFW_PRESS;
-        if (key_4 && !key_4_last_frame) renderer.setPreviewMode(PreviewMode::GAlbedo);
-        key_4_last_frame = key_4;
-
-        bool key_5 = glfwGetKey(window.native_handle(), GLFW_KEY_5) == GLFW_PRESS;
-        if (key_5 && !key_5_last_frame) renderer.setPreviewMode(PreviewMode::GMaterial);
-        key_5_last_frame = key_5;
-
-        bool key_6 = glfwGetKey(window.native_handle(), GLFW_KEY_6) == GLFW_PRESS;
-        if (key_6 && !key_6_last_frame) renderer.setPreviewMode(PreviewMode::GEmissive);
-        key_6_last_frame = key_6;
-
         renderer.clearSubmissions();
+        editor_commands_frame.beginFrame();
         render_context_frame.beginFrame();
         render_context_frame.writable().camera_position = camera.position();
 
@@ -176,6 +140,11 @@ int main()
         renderer.renderFrame(camera, render_context_frame.context());
 
         editor_ui.draw();
+
+        if (editor_commands_frame.commands().reload_shaders) {
+            renderer.reloadBuiltinShaders();
+            blinn_phong_shader.reload();
+        }
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

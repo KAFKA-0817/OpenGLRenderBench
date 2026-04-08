@@ -32,6 +32,29 @@ namespace editor {
                 scene.addTransform(entity, default_transform);
             }
         }
+
+        void drawPreviewModeMenu(renderer::Renderer& renderer) {
+            const auto current_mode = renderer.previewMode();
+
+            if (ImGui::MenuItem("Final Scene", nullptr, current_mode == renderer::PreviewMode::FinalScene)) {
+                renderer.setPreviewMode(renderer::PreviewMode::FinalScene);
+            }
+            if (ImGui::MenuItem("GPosition", nullptr, current_mode == renderer::PreviewMode::GPosition)) {
+                renderer.setPreviewMode(renderer::PreviewMode::GPosition);
+            }
+            if (ImGui::MenuItem("GNormal", nullptr, current_mode == renderer::PreviewMode::GNormal)) {
+                renderer.setPreviewMode(renderer::PreviewMode::GNormal);
+            }
+            if (ImGui::MenuItem("GAlbedo", nullptr, current_mode == renderer::PreviewMode::GAlbedo)) {
+                renderer.setPreviewMode(renderer::PreviewMode::GAlbedo);
+            }
+            if (ImGui::MenuItem("GMaterial", nullptr, current_mode == renderer::PreviewMode::GMaterial)) {
+                renderer.setPreviewMode(renderer::PreviewMode::GMaterial);
+            }
+            if (ImGui::MenuItem("GEmissive", nullptr, current_mode == renderer::PreviewMode::GEmissive)) {
+                renderer.setPreviewMode(renderer::PreviewMode::GEmissive);
+            }
+        }
     }
 
     void EditorUI::draw() {
@@ -90,6 +113,19 @@ namespace editor {
         }
 
         if (ImGui::BeginMenuBar()) {
+            if (ImGui::BeginMenu("Render")) {
+                if (ImGui::MenuItem("Reload Shaders")) {
+                    commands_frame_.writable().reload_shaders = true;
+                }
+
+                if (ImGui::BeginMenu("Preview")) {
+                    drawPreviewModeMenu(renderer_);
+                    ImGui::EndMenu();
+                }
+
+                ImGui::EndMenu();
+            }
+
             if (ImGui::BeginMenu("Window")) {
                 ImGui::MenuItem("Hierarchy", nullptr, &state_.show_hierarchy);
                 ImGui::MenuItem("Inspector", nullptr, &state_.show_inspector);
