@@ -8,7 +8,7 @@
 #include "../core/FrameBuffer.hpp"
 #include "../core/Shader.hpp"
 #include "../asset/Model.hpp"
-#include "RenderContextFrame.hpp"
+#include "../../app/frame/RenderContextFrame.hpp"
 
 namespace renderer {
 

@@ -90,7 +90,7 @@ add_executable(PBRRenderer main.cpp
         src/editor/EditorUi.cpp
         src/editor/EditorUi.hpp
         src/editor/EditorState.hpp
-        src/renderer/pipeline/RenderContextFrame.hpp
+        src/app/frame/RenderContextFrame.hpp
 )
 
 target_link_libraries(PBRRenderer PRIVATE

@@ -7,7 +7,7 @@
 #include "Material.hpp"
 #include "../camera/Camera.hpp"
 #include "../core/Shader.hpp"
-#include "../pipeline/RenderContextFrame.hpp"
+#include "../../app/frame/RenderContextFrame.hpp"
 
 namespace renderer {
     class ForwardMaterial : public Material {

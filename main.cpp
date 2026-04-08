@@ -12,7 +12,7 @@
 #include "src/renderer/asset/PrimitiveFactory.hpp"
 #include "src/renderer/asset/importer/GltfImporter.hpp"
 #include "src/renderer/asset/importer/RuntimeAssetBuilder.hpp"
-#include "src/renderer/pipeline/RenderContextFrame.hpp"
+#include "src/app/frame/RenderContextFrame.hpp"
 #include "src/renderer/pipeline/Renderer.hpp"
 
 #include "src/renderer/core/Shader.hpp"
@@ -50,7 +50,7 @@ int main()
     // 开启 Docking
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-    // 你如果以后想多 viewport，再开这个
+    // 多viewport，再开这个
     // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
     ImGui::StyleColorsDark();
@@ -59,10 +59,6 @@ int main()
     ImGui_ImplOpenGL3_Init("#version 410");
 
     AssetManager asset_manager;
-    // const auto gltf_path = core::ProjectPaths::model("ABeautifulGame\\ABeautifulGame.gltf");
-    // const auto gltf_path = core::ProjectPaths::model("Lantern.glb");
-    // const auto gltf_path = core::ProjectPaths::model("BoomBox.glb");
-    // const auto gltf_path = core::ProjectPaths::model("2CylinderEngine.glb");
     asset_manager.requestModel(core::ProjectPaths::model("ABeautifulGame\\ABeautifulGame.gltf"));
     asset_manager.requestModel(core::ProjectPaths::model("Lantern.glb"));
     asset_manager.requestModel(core::ProjectPaths::model("BoomBox.glb"));

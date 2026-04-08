@@ -6,7 +6,7 @@
 #define PBRRENDERER_LIGHTSYSTEM_HPP
 
 #include "Scene.hpp"
-#include "../../renderer/pipeline/RenderContextFrame.hpp"
+#include "../../app/frame/RenderContextFrame.hpp"
 
 namespace editor {
     class LightSystem {

@@ -8,7 +8,7 @@
 #include "FragPosPass.hpp"
 #include "GBufferPass.hpp"
 #include "PresentPass.hpp"
-#include "RenderContextFrame.hpp"
+#include "../../app/frame/RenderContextFrame.hpp"
 #include "../../core/opengl.hpp"
 #include "../../core/noncopyable.hpp"
 #include "LightingPass.hpp"
