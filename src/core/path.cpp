@@ -6,7 +6,7 @@
 
 namespace core {
     std::filesystem::path ProjectPaths::root() {
-        return R"(C:\Users\kaede\codes\cpp\PBRRenderer)";
+        return R"(C:\Users\kaede\codes\cpp\Renderer\PBRRenderer)";
     }
 
     std::filesystem::path ProjectPaths::assets() {

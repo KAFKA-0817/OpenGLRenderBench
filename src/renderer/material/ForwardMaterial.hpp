@@ -5,7 +5,9 @@
 #ifndef PBRRENDERER_FORWARDMATERIAL_HPP
 #define PBRRENDERER_FORWARDMATERIAL_HPP
 #include "Material.hpp"
+#include "../camera/Camera.hpp"
 #include "../core/Shader.hpp"
+#include "../pipeline/RenderContextFrame.hpp"
 
 namespace renderer {
     class ForwardMaterial : public Material {

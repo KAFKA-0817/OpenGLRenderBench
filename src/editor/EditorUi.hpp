@@ -45,7 +45,9 @@ private:
     enum class ComponentRemoveRequest {
         Name,
         Transform,
-        MeshRenderer
+        MeshRenderer,
+        DirectionalLight,
+        PointLight
     };
 
 } // editor

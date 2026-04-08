@@ -37,6 +37,19 @@ namespace editor {
         renderer::Model* model = nullptr;
         bool visible = true;
     };
+
+    struct DirectionalLightComponent {
+        glm::vec3 color = {1.0f, 1.0f, 1.0f};
+        float intensity = 1.0f;
+        bool enabled = true;
+    };
+
+    struct PointLightComponent {
+        glm::vec3 color = {1.0f, 1.0f, 1.0f};
+        float intensity = 1.0f;
+        float range = 10.0f;
+        bool enabled = true;
+    };
 }
 
 #endif //PBRRENDERER_COMPONENTS_HPP

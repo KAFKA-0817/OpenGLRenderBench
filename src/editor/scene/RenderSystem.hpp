@@ -13,7 +13,7 @@ namespace renderer {
 namespace editor {
     class RenderSystem {
     public:
-        static void renderScene(renderer::Renderer& renderer, Scene& scene);
+        static void renderScene(renderer::Renderer& renderer, const Scene& scene);
     };
 }
 

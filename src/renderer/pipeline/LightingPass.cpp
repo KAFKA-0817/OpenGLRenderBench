@@ -4,6 +4,8 @@
 
 #include "LightingPass.hpp"
 
+#include <string>
+
 #include "../../core/path.hpp"
 #include "../asset/PrimitiveFactory.hpp"
 
@@ -38,8 +40,23 @@ namespace renderer {
         shader_.use();
 
         shader_.setVec3("u_ViewPos", context.camera_position);
-        shader_.setVec3("u_Light.direction", context.light_direction);
-        shader_.setVec3("u_Light.color", context.light_color);
+        shader_.setInt("u_HasDirectionalLight", context.directional_light.valid ? 1 : 0);
+        shader_.setInt("u_PointLightCount", static_cast<int>(context.point_light_count));
+
+        if (context.directional_light.valid) {
+            shader_.setVec3("u_DirectionalLight.direction", context.directional_light.direction);
+            shader_.setVec3("u_DirectionalLight.color", context.directional_light.color);
+            shader_.setFloat("u_DirectionalLight.intensity", context.directional_light.intensity);
+        }
+
+        for (std::uint32_t i = 0; i < context.point_light_count; ++i) {
+            const auto& light = context.point_lights[i];
+            const std::string prefix = "u_PointLights[" + std::to_string(i) + "]";
+            shader_.setVec3(prefix + ".position", light.position);
+            shader_.setFloat(prefix + ".range", light.range);
+            shader_.setVec3(prefix + ".color", light.color);
+            shader_.setFloat(prefix + ".intensity", light.intensity);
+        }
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, g_position);

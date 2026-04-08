@@ -35,6 +35,8 @@ namespace editor {
         nameComponents_.remove(entity);
         transformComponents_.remove(entity);
         meshRendererComponents_.remove(entity);
+        directionalLightComponents_.remove(entity);
+        pointLightComponents_.remove(entity);
     }
 
     bool Scene::isAlive(Entity entity) const noexcept {
@@ -72,6 +74,22 @@ namespace editor {
         return meshRendererComponents_.insert(entity,component);
     }
 
+    DirectionalLightComponent& Scene::addDirectionalLight(Entity entity, DirectionalLightComponent component) {
+        if (!isAlive(entity)) {
+            throw std::runtime_error("Scene::addDirectionalLight on invalid entity");
+        }
+
+        return directionalLightComponents_.insert(entity, component);
+    }
+
+    PointLightComponent& Scene::addPointLight(Entity entity, PointLightComponent component) {
+        if (!isAlive(entity)) {
+            throw std::runtime_error("Scene::addPointLight on invalid entity");
+        }
+
+        return pointLightComponents_.insert(entity, component);
+    }
+
     bool Scene::hasName(Entity entity) const {
         return nameComponents_.contains(entity);
     }
@@ -82,6 +100,14 @@ namespace editor {
 
     bool Scene::hasMeshRenderer(Entity entity) const {
         return meshRendererComponents_.contains(entity);
+    }
+
+    bool Scene::hasDirectionalLight(Entity entity) const {
+        return directionalLightComponents_.contains(entity);
+    }
+
+    bool Scene::hasPointLight(Entity entity) const {
+        return pointLightComponents_.contains(entity);
     }
 
     NameComponent* Scene::tryGetName(Entity entity) {
@@ -96,6 +122,14 @@ namespace editor {
         return meshRendererComponents_.tryGet(entity);
     }
 
+    DirectionalLightComponent* Scene::tryGetDirectionalLight(Entity entity) {
+        return directionalLightComponents_.tryGet(entity);
+    }
+
+    PointLightComponent* Scene::tryGetPointLight(Entity entity) {
+        return pointLightComponents_.tryGet(entity);
+    }
+
     const NameComponent* Scene::tryGetName(Entity entity) const {
         return nameComponents_.tryGet(entity);
     }
@@ -106,5 +140,13 @@ namespace editor {
 
     const MeshRendererComponent* Scene::tryGetMeshRenderer(Entity entity) const {
         return meshRendererComponents_.tryGet(entity);
+    }
+
+    const DirectionalLightComponent* Scene::tryGetDirectionalLight(Entity entity) const {
+        return directionalLightComponents_.tryGet(entity);
+    }
+
+    const PointLightComponent* Scene::tryGetPointLight(Entity entity) const {
+        return pointLightComponents_.tryGet(entity);
     }
 } // editor

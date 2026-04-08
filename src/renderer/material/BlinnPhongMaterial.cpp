@@ -4,7 +4,31 @@
 
 #include "BlinnPhongMaterial.hpp"
 
+#include <string>
+
 namespace renderer {
+    namespace {
+        void bindLights(Shader& shader, const RenderContext& context) {
+            shader.setInt("u_HasDirectionalLight", context.directional_light.valid ? 1 : 0);
+            shader.setInt("u_PointLightCount", static_cast<int>(context.point_light_count));
+
+            if (context.directional_light.valid) {
+                shader.setVec3("u_DirectionalLight.direction", context.directional_light.direction);
+                shader.setVec3("u_DirectionalLight.color", context.directional_light.color);
+                shader.setFloat("u_DirectionalLight.intensity", context.directional_light.intensity);
+            }
+
+            for (std::uint32_t i = 0; i < context.point_light_count; ++i) {
+                const auto& light = context.point_lights[i];
+                const std::string prefix = "u_PointLights[" + std::to_string(i) + "]";
+                shader.setVec3(prefix + ".position", light.position);
+                shader.setFloat(prefix + ".range", light.range);
+                shader.setVec3(prefix + ".color", light.color);
+                shader.setFloat(prefix + ".intensity", light.intensity);
+            }
+        }
+    }
+
     BlinnPhongMaterial::BlinnPhongMaterial(Shader& shader)
     : ForwardMaterial(shader)
     {}
@@ -19,8 +43,7 @@ namespace renderer {
         shader_.setMat4("u_Projection", camera.getProjectionMatrix());
 
         shader_.setVec3("u_ViewPos", context.camera_position);
-        shader_.setVec3("u_Light.direction", context.light_direction);
-        shader_.setVec3("u_Light.color", context.light_color);
+        bindLights(shader_, context);
 
         shader_.setVec3("u_Material.albedo", albedo_);
         shader_.setVec3("u_Material.specular", specular_);

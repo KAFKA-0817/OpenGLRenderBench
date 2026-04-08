@@ -12,6 +12,7 @@ add_subdirectory("external/glad")
 add_subdirectory("external/stb_image")
 add_subdirectory("external/tinygltf")
 add_subdirectory("external/imgui")
+add_subdirectory("external/imguizmo")
 
 add_executable(PBRRenderer main.cpp
         src/core/file_io.hpp
@@ -81,12 +82,15 @@ add_executable(PBRRenderer main.cpp
         src/editor/scene/Components.hpp
         src/editor/scene/Scene.cpp
         src/editor/scene/Scene.hpp
+        src/editor/scene/LightSystem.cpp
+        src/editor/scene/LightSystem.hpp
         src/editor/scene/RenderSystem.hpp
         src/editor/scene/RenderSystem.cpp
         src/editor/scene/SparseSet.hpp
         src/editor/EditorUi.cpp
         src/editor/EditorUi.hpp
         src/editor/EditorState.hpp
+        src/renderer/pipeline/RenderContextFrame.hpp
 )
 
 target_link_libraries(PBRRenderer PRIVATE
@@ -97,4 +101,5 @@ target_link_libraries(PBRRenderer PRIVATE
         stb_image
         tinygltf
         imgui
+        imguizmo
 )

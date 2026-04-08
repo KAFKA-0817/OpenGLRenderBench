@@ -1,7 +1,14 @@
 #version 410 core
 
 out vec4 FragColor;
-in vec2 vTexCoord;
+
+in VS_OUT {
+    vec3 FragPos;
+    vec2 TexCoord;
+    vec3 T;
+    vec3 B;
+    vec3 N;
+} fs_in;
 
 const float PI = 3.14159265359;
 const int MAX_POINT_LIGHTS = 64;
@@ -19,17 +26,35 @@ struct PointLight {
     float intensity;
 };
 
-uniform sampler2D u_GPosition;
-uniform sampler2D u_GNormal;
-uniform sampler2D u_GAlbedo;
-uniform sampler2D u_GMaterial;
-uniform sampler2D u_GEmissive;
+struct MaterialData {
+    vec3 baseColorFactor;
+    float alphaFactor;
 
+    float metallicFactor;
+    float roughnessFactor;
+    float normalScale;
+    float occlusionStrength;
+
+    vec3 emissiveFactor;
+    int hasBaseColorMap;
+    int hasMetallicRoughnessMap;
+    int hasNormalMap;
+    int hasOcclusionMap;
+    int hasEmissiveMap;
+};
+
+uniform MaterialData u_Material;
 uniform int u_HasDirectionalLight;
 uniform DirectionalLight u_DirectionalLight;
 uniform int u_PointLightCount;
 uniform PointLight u_PointLights[MAX_POINT_LIGHTS];
 uniform vec3 u_ViewPos;
+
+uniform sampler2D u_BaseColorMap;
+uniform sampler2D u_MetallicRoughnessMap;
+uniform sampler2D u_NormalMap;
+uniform sampler2D u_OcclusionMap;
+uniform sampler2D u_EmissiveMap;
 
 float DistributionGGX(vec3 N, vec3 H, float roughness) {
     float a = roughness * roughness;
@@ -101,30 +126,68 @@ float ComputePointAttenuation(PointLight light, float distanceToLight) {
 }
 
 void main() {
-    vec3 fragPos = texture(u_GPosition, vTexCoord).rgb;
-    vec3 normal = texture(u_GNormal, vTexCoord).rgb * 2.0 - 1.0;
-    vec3 albedo = texture(u_GAlbedo, vTexCoord).rgb;
-    vec3 material = texture(u_GMaterial, vTexCoord).rgb;
-    vec3 emissive = texture(u_GEmissive, vTexCoord).rgb;
+    vec3 baseColor = u_Material.baseColorFactor;
+    float alpha = u_Material.alphaFactor;
 
-    float metallic = material.r;
-    float roughness = clamp(material.g, 0.04, 1.0);
-    float ao = material.b;
+    if (u_Material.hasBaseColorMap == 1) {
+        vec4 baseSample = texture(u_BaseColorMap, fs_in.TexCoord);
+        baseColor *= baseSample.rgb;
+        alpha *= baseSample.a;
+    }
 
-    vec3 N = normalize(normal);
-    vec3 V = normalize(u_ViewPos - fragPos);
+    if (alpha <= 0.001) {
+        discard;
+    }
 
+    float metallic = u_Material.metallicFactor;
+    float roughness = u_Material.roughnessFactor;
+
+    if (u_Material.hasMetallicRoughnessMap == 1) {
+        vec4 mr = texture(u_MetallicRoughnessMap, fs_in.TexCoord);
+        roughness *= mr.g;
+        metallic *= mr.b;
+    }
+
+    float ao = 1.0;
+    if (u_Material.hasOcclusionMap == 1) {
+        ao = mix(1.0, texture(u_OcclusionMap, fs_in.TexCoord).r, u_Material.occlusionStrength);
+    }
+
+    vec3 emissive = u_Material.emissiveFactor;
+    if (u_Material.hasEmissiveMap == 1) {
+        emissive *= texture(u_EmissiveMap, fs_in.TexCoord).rgb;
+    }
+
+    vec3 N = normalize(fs_in.N);
+    if (u_Material.hasNormalMap == 1) {
+        vec3 tangentNormal = texture(u_NormalMap, fs_in.TexCoord).xyz * 2.0 - 1.0;
+        tangentNormal.xy *= u_Material.normalScale;
+
+        float tangentLen = length(fs_in.T);
+        float bitangentLen = length(fs_in.B);
+        if (tangentLen > 1e-5 && bitangentLen > 1e-5) {
+            vec3 T = normalize(fs_in.T);
+            vec3 B = normalize(fs_in.B);
+            vec3 NN = normalize(fs_in.N);
+            mat3 TBN = mat3(T, B, NN);
+            N = normalize(TBN * tangentNormal);
+        }
+    }
+
+    roughness = clamp(roughness, 0.04, 1.0);
+
+    vec3 V = normalize(u_ViewPos - fs_in.FragPos);
     vec3 directLighting = vec3(0.0);
 
     if (u_HasDirectionalLight == 1) {
         vec3 L = normalize(-u_DirectionalLight.direction);
         vec3 radiance = u_DirectionalLight.color * u_DirectionalLight.intensity;
-        directLighting += EvaluatePbrDirect(N, V, L, radiance, albedo, metallic, roughness);
+        directLighting += EvaluatePbrDirect(N, V, L, radiance, baseColor, metallic, roughness);
     }
 
     for (int i = 0; i < u_PointLightCount; ++i) {
         PointLight light = u_PointLights[i];
-        vec3 lightVector = light.position - fragPos;
+        vec3 lightVector = light.position - fs_in.FragPos;
         float distanceToLight = length(lightVector);
         float attenuation = ComputePointAttenuation(light, distanceToLight);
         if (attenuation <= 0.0) {
@@ -133,18 +196,18 @@ void main() {
 
         vec3 L = distanceToLight > 0.0001 ? lightVector / distanceToLight : N;
         vec3 radiance = light.color * light.intensity * attenuation;
-        directLighting += EvaluatePbrDirect(N, V, L, radiance, albedo, metallic, roughness);
+        directLighting += EvaluatePbrDirect(N, V, L, radiance, baseColor, metallic, roughness);
     }
 
     float hemi = N.y * 0.5 + 0.5;
     vec3 skyColor = vec3(0.10, 0.12, 0.16);
     vec3 groundColor = vec3(0.13, 0.13, 0.13);
     vec3 hemiLight = mix(groundColor, skyColor, hemi);
-    vec3 ambient = hemiLight * albedo * ao;
+    vec3 ambient = hemiLight * baseColor * ao;
 
     vec3 color = ambient + directLighting + emissive;
     color = vec3(1.0) - exp(-color * 1.0);
     color = pow(color, vec3(1.0 / 2.2));
 
-    FragColor = vec4(color, 1.0);
+    FragColor = vec4(color, alpha);
 }

@@ -11,6 +11,29 @@
 #include "misc/cpp/imgui_stdlib.h"
 
 namespace editor {
+    namespace {
+        constexpr glm::vec3 kDefaultDirectionalLightRotation{-70.0f, 33.0f, 0.0f};
+        constexpr glm::vec3 kDefaultPointLightPosition{0.0f, 1.0f, 0.0f};
+
+        TransformComponent makeDirectionalLightTransform() {
+            TransformComponent transform{};
+            transform.rotation = kDefaultDirectionalLightRotation;
+            return transform;
+        }
+
+        TransformComponent makePointLightTransform() {
+            TransformComponent transform{};
+            transform.position = kDefaultPointLightPosition;
+            return transform;
+        }
+
+        void ensureTransform(Scene& scene, Entity entity, const TransformComponent& default_transform = {}) {
+            if (!scene.hasTransform(entity)) {
+                scene.addTransform(entity, default_transform);
+            }
+        }
+    }
+
     void EditorUI::draw() {
         drawDockSpace();
         if (state_.show_hierarchy) {
@@ -91,6 +114,20 @@ namespace editor {
                 const Entity entity = scene_.createEntity();
                 scene_.addName(entity, {"Empty"});
                 scene_.addTransform(entity, {});
+                state_.selectedEntity = entity;
+            }
+            if (ImGui::MenuItem("Create Directional Light")) {
+                const Entity entity = scene_.createEntity();
+                scene_.addName(entity, {"Directional Light"});
+                scene_.addTransform(entity, makeDirectionalLightTransform());
+                scene_.addDirectionalLight(entity, {});
+                state_.selectedEntity = entity;
+            }
+            if (ImGui::MenuItem("Create Point Light")) {
+                const Entity entity = scene_.createEntity();
+                scene_.addName(entity, {"Point Light"});
+                scene_.addTransform(entity, makePointLightTransform());
+                scene_.addPointLight(entity, {});
                 state_.selectedEntity = entity;
             }
             ImGui::EndPopup();
@@ -218,6 +255,20 @@ namespace editor {
                 }
             }
 
+            if (!scene_.hasDirectionalLight(entity)) {
+                if (ImGui::MenuItem("Directional Light")) {
+                    ensureTransform(scene_, entity, makeDirectionalLightTransform());
+                    scene_.addDirectionalLight(entity, {});
+                }
+            }
+
+            if (!scene_.hasPointLight(entity)) {
+                if (ImGui::MenuItem("Point Light")) {
+                    ensureTransform(scene_, entity, makePointLightTransform());
+                    scene_.addPointLight(entity, {});
+                }
+            }
+
             ImGui::EndPopup();
         }
 
@@ -305,17 +356,74 @@ namespace editor {
             }
         }
 
+        if (auto* light = scene_.tryGetDirectionalLight(entity)) {
+            ImGui::SeparatorText("Directional Light");
+            ImGui::SameLine();
+            if (ImGui::SmallButton("...##DirectionalLightComponent")) {
+                ImGui::OpenPopup("DirectionalLightComponentMenu");
+            }
+
+            if (ImGui::BeginPopup("DirectionalLightComponentMenu")) {
+                if (ImGui::MenuItem("Remove Component")) {
+                    remove_requests.push_back(ComponentRemoveRequest::DirectionalLight);
+                }
+                ImGui::EndPopup();
+            }
+
+            ImGui::Checkbox("Enabled", &light->enabled);
+            ImGui::ColorEdit3("Color", &light->color.x);
+            ImGui::DragFloat("Intensity", &light->intensity, 0.05f, 0.0f, 100.0f);
+            if (light->intensity < 0.0f) {
+                light->intensity = 0.0f;
+            }
+            ImGui::TextDisabled("Direction follows Transform rotation.");
+        }
+
+        if (auto* light = scene_.tryGetPointLight(entity)) {
+            ImGui::SeparatorText("Point Light");
+            ImGui::SameLine();
+            if (ImGui::SmallButton("...##PointLightComponent")) {
+                ImGui::OpenPopup("PointLightComponentMenu");
+            }
+
+            if (ImGui::BeginPopup("PointLightComponentMenu")) {
+                if (ImGui::MenuItem("Remove Component")) {
+                    remove_requests.push_back(ComponentRemoveRequest::PointLight);
+                }
+                ImGui::EndPopup();
+            }
+
+            ImGui::Checkbox("Enabled", &light->enabled);
+            ImGui::ColorEdit3("Color", &light->color.x);
+            ImGui::DragFloat("Intensity##PointLight", &light->intensity, 0.05f, 0.0f, 100.0f);
+            ImGui::DragFloat("Range", &light->range, 0.05f, 0.0f, 1000.0f);
+            if (light->intensity < 0.0f) {
+                light->intensity = 0.0f;
+            }
+            if (light->range < 0.0f) {
+                light->range = 0.0f;
+            }
+            ImGui::TextDisabled("Position follows Transform position.");
+        }
+
         for (const auto& request: remove_requests) {
             switch (request) {
-                default:
+                case ComponentRemoveRequest::Name:
+                    scene_.removeName(entity);
+                    break;
                 case ComponentRemoveRequest::Transform:
                     scene_.removeTransform(entity);
                     break;
                 case ComponentRemoveRequest::MeshRenderer:
                     scene_.removeMeshRenderer(entity);
                     break;
-                case ComponentRemoveRequest::Name:
-                    scene_.removeName(entity);
+                case ComponentRemoveRequest::DirectionalLight:
+                    scene_.removeDirectionalLight(entity);
+                    break;
+                case ComponentRemoveRequest::PointLight:
+                    scene_.removePointLight(entity);
+                    break;
+                default:
                     break;
             }
         }

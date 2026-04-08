@@ -6,11 +6,13 @@
 #include "src/core/path.hpp"
 #include "src/core/ThreadPool.hpp"
 #include "src/editor/scene/RenderSystem.hpp"
+#include "src/editor/scene/LightSystem.hpp"
 #include "src/editor/scene/Scene.hpp"
 #include "src/renderer/asset/AssetManager.hpp"
 #include "src/renderer/asset/PrimitiveFactory.hpp"
 #include "src/renderer/asset/importer/GltfImporter.hpp"
 #include "src/renderer/asset/importer/RuntimeAssetBuilder.hpp"
+#include "src/renderer/pipeline/RenderContextFrame.hpp"
 #include "src/renderer/pipeline/Renderer.hpp"
 
 #include "src/renderer/core/Shader.hpp"
@@ -56,8 +58,6 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(window.native_handle(), true);
     ImGui_ImplOpenGL3_Init("#version 410");
 
-
-
     AssetManager asset_manager;
     // const auto gltf_path = core::ProjectPaths::model("ABeautifulGame\\ABeautifulGame.gltf");
     // const auto gltf_path = core::ProjectPaths::model("Lantern.glb");
@@ -68,6 +68,15 @@ int main()
     asset_manager.requestModel(core::ProjectPaths::model("BoomBox.glb"));
 
     editor::Scene scene;
+    editor::Entity main_light = scene.createEntity();
+    scene.addName(main_light, {"Main Light"});
+    scene.addTransform(main_light, {
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(-70.0f, 33.0f, 0.0f),
+        glm::vec3(1.0f)
+    });
+    scene.addDirectionalLight(main_light, {});
+
     editor::Entity aBeautifulGame = scene.createEntity();
     scene.addName(aBeautifulGame,{"aBeautifulGame"});
     scene.addTransform(aBeautifulGame,{
@@ -96,6 +105,7 @@ int main()
     scene.addMeshRenderer(debug_cube,{&debug_cube_model,true});
 
     Renderer renderer(width,height);
+    RenderContextFrame render_context_frame;
     renderer.setPresentToScreenEnabled(false);
     PerspectiveCamera camera;
     OrbitController controller(window.native_handle(),&camera);
@@ -162,9 +172,12 @@ int main()
         key_6_last_frame = key_6;
 
         renderer.clearSubmissions();
+        render_context_frame.beginFrame();
+        render_context_frame.writable().camera_position = camera.position();
 
-        editor::RenderSystem::renderScene(renderer,scene);
-        renderer.renderFrame(camera);
+        editor::LightSystem::writeLights(render_context_frame, scene);
+        editor::RenderSystem::renderScene(renderer, scene);
+        renderer.renderFrame(camera, render_context_frame.context());
 
         editor_ui.draw();
 

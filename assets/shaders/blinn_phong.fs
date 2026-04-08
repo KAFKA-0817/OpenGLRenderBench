@@ -6,9 +6,19 @@ in vec3 vFragPos;
 in vec3 vNormal;
 in vec2 vTexCoord;
 
-struct Light {
+const int MAX_POINT_LIGHTS = 64;
+
+struct DirectionalLight {
     vec3 direction;
     vec3 color;
+    float intensity;
+};
+
+struct PointLight {
+    vec3 position;
+    float range;
+    vec3 color;
+    float intensity;
 };
 
 struct MaterialData {
@@ -19,18 +29,42 @@ struct MaterialData {
     int hasSpecularMap;
 };
 
-uniform Light u_Light;
+uniform int u_HasDirectionalLight;
+uniform DirectionalLight u_DirectionalLight;
+uniform int u_PointLightCount;
+uniform PointLight u_PointLights[MAX_POINT_LIGHTS];
 uniform MaterialData u_Material;
 uniform vec3 u_ViewPos;
 
 uniform sampler2D u_DiffuseMap;
 uniform sampler2D u_SpecularMap;
 
+vec3 EvaluateBlinnPhong(vec3 N,
+                        vec3 V,
+                        vec3 L,
+                        vec3 radiance,
+                        vec3 albedo,
+                        vec3 specularColor,
+                        float shininess) {
+    vec3 H = normalize(L + V);
+    float diff = max(dot(N, L), 0.0);
+    float spec = pow(max(dot(N, H), 0.0), shininess);
+    return diff * albedo * radiance + spec * specularColor * radiance;
+}
+
+float ComputePointAttenuation(PointLight light, float distanceToLight) {
+    if (light.range <= 0.0001 || distanceToLight >= light.range) {
+        return 0.0;
+    }
+
+    float normalizedDistance = clamp(distanceToLight / light.range, 0.0, 1.0);
+    float falloff = 1.0 - normalizedDistance;
+    return falloff * falloff;
+}
+
 void main() {
     vec3 N = normalize(vNormal);
-    vec3 L = normalize(-u_Light.direction);
     vec3 V = normalize(u_ViewPos - vFragPos);
-    vec3 H = normalize(L + V);
 
     vec3 albedo = u_Material.albedo;
     if (u_Material.hasDiffuseMap == 1) {
@@ -42,13 +76,29 @@ void main() {
         specularColor *= texture(u_SpecularMap, vTexCoord).rgb;
     }
 
-    float diff = max(dot(N, L), 0.0);
-    float spec = pow(max(dot(N, H), 0.0), u_Material.shininess);
+    vec3 directLighting = vec3(0.0);
+
+    if (u_HasDirectionalLight == 1) {
+        vec3 L = normalize(-u_DirectionalLight.direction);
+        vec3 radiance = u_DirectionalLight.color * u_DirectionalLight.intensity;
+        directLighting += EvaluateBlinnPhong(N, V, L, radiance, albedo, specularColor, u_Material.shininess);
+    }
+
+    for (int i = 0; i < u_PointLightCount; ++i) {
+        PointLight light = u_PointLights[i];
+        vec3 lightVector = light.position - vFragPos;
+        float distanceToLight = length(lightVector);
+        float attenuation = ComputePointAttenuation(light, distanceToLight);
+        if (attenuation <= 0.0) {
+            continue;
+        }
+
+        vec3 L = distanceToLight > 0.0001 ? lightVector / distanceToLight : N;
+        vec3 radiance = light.color * light.intensity * attenuation;
+        directLighting += EvaluateBlinnPhong(N, V, L, radiance, albedo, specularColor, u_Material.shininess);
+    }
 
     vec3 ambient = 0.05 * albedo;
-    vec3 diffuse = diff * albedo * u_Light.color;
-    vec3 specular = spec * specularColor * u_Light.color;
-
-    vec3 color = ambient + diffuse + specular;
+    vec3 color = ambient + directLighting;
     FragColor = vec4(color, 1.0);
 }

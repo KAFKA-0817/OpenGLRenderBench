@@ -27,21 +27,31 @@ namespace editor {
         NameComponent& addName(Entity entity, NameComponent component = {});
         TransformComponent& addTransform(Entity entity, TransformComponent component = {});
         MeshRendererComponent& addMeshRenderer(Entity entity, MeshRendererComponent component = {});
+        DirectionalLightComponent& addDirectionalLight(Entity entity, DirectionalLightComponent component = {});
+        PointLightComponent& addPointLight(Entity entity, PointLightComponent component = {});
         void removeName(Entity entity) { nameComponents_.remove(entity); }
         void removeTransform(Entity entity) { transformComponents_.remove(entity); }
         void removeMeshRenderer(Entity entity) { meshRendererComponents_.remove(entity); }
+        void removeDirectionalLight(Entity entity) { directionalLightComponents_.remove(entity); }
+        void removePointLight(Entity entity) { pointLightComponents_.remove(entity); }
 
         bool hasName(Entity entity) const;
         bool hasTransform(Entity entity) const;
         bool hasMeshRenderer(Entity entity) const;
+        bool hasDirectionalLight(Entity entity) const;
+        bool hasPointLight(Entity entity) const;
 
         NameComponent* tryGetName(Entity entity);
         TransformComponent* tryGetTransform(Entity entity);
         MeshRendererComponent* tryGetMeshRenderer(Entity entity);
+        DirectionalLightComponent* tryGetDirectionalLight(Entity entity);
+        PointLightComponent* tryGetPointLight(Entity entity);
 
         const NameComponent* tryGetName(Entity entity) const;
         const TransformComponent* tryGetTransform(Entity entity) const;
         const MeshRendererComponent* tryGetMeshRenderer(Entity entity) const;
+        const DirectionalLightComponent* tryGetDirectionalLight(Entity entity) const;
+        const PointLightComponent* tryGetPointLight(Entity entity) const;
 
     private:
         Entity next_entity_ = 1;
@@ -51,6 +61,8 @@ namespace editor {
         SparseSet<NameComponent> nameComponents_;
         SparseSet<TransformComponent> transformComponents_;
         SparseSet<MeshRendererComponent> meshRendererComponents_;
+        SparseSet<DirectionalLightComponent> directionalLightComponents_;
+        SparseSet<PointLightComponent> pointLightComponents_;
     };
 } // editor
 

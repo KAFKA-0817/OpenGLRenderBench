@@ -6,6 +6,7 @@
 
 #include "../../core/path.hpp"
 #include "../asset/PrimitiveFactory.hpp"
+#include "../material/PbrMaterial.hpp"
 
 namespace renderer {
     Renderer::Renderer(int width, int height)
@@ -28,6 +29,13 @@ namespace renderer {
             &material,
             model_matrix
         };
+
+        if (const auto* pbr_material = dynamic_cast<const PBRMaterial*>(&material);
+            pbr_material && pbr_material->alphaMode() == AlphaMode::Blend) {
+            transparent_items_.push_back(item);
+            return;
+        }
+
         if (material.renderPath() == RenderPath::Deferred) {
             deferred_items_.push_back(item);
         } else {
@@ -38,6 +46,7 @@ namespace renderer {
     void Renderer::clearSubmissions() {
         deferred_items_.clear();
         forward_items_.clear();
+        transparent_items_.clear();
     }
 
     GLuint Renderer::currentPreviewTexture() const noexcept {
@@ -59,9 +68,7 @@ namespace renderer {
         }
     }
 
-    void Renderer::renderFrame(const Camera& camera) {
-        render_context_.camera_position = camera.position();
-
+    void Renderer::renderFrame(const Camera& camera, const RenderContext& render_context) {
         gbuffer_pass_.execute(deferred_items_, camera);
 
         lighting_pass_.execute(
@@ -70,15 +77,20 @@ namespace renderer {
             gbuffer_pass_.gAlbedo(),
             gbuffer_pass_.gMaterial(),
             gbuffer_pass_.gEmissive(),
-            render_context_
+            render_context
         );
 
         FrameBuffer::blitDepth(gbuffer_pass_.framebuffer(), lighting_pass_.framebuffer());
 
         forward_pass_.execute(forward_items_,
                               camera,
-                              render_context_,
+                              render_context,
                               lighting_pass_.framebuffer());
+
+        forward_pass_.executeTransparentPbr(transparent_items_,
+                                            camera,
+                                            render_context,
+                                            lighting_pass_.framebuffer());
 
         if (present_to_screen_enabled_) {
             present_pass_.present(currentPreviewTexture(),
@@ -91,6 +103,7 @@ namespace renderer {
     void Renderer::reloadBuiltinShaders() {
         gbuffer_pass_.reloadShader();
         lighting_pass_.reloadShader();
+        forward_pass_.reloadShader();
         present_pass_.reloadShader();
     }
 }

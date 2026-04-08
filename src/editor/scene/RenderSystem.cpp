@@ -7,10 +7,10 @@
 #include "../../renderer/pipeline/Renderer.hpp"
 
 namespace editor {
-    void RenderSystem::renderScene(renderer::Renderer& renderer, Scene& scene) {
+    void RenderSystem::renderScene(renderer::Renderer& renderer, const Scene& scene) {
         for (const auto& entity:scene.entities()) {
-            auto meshComponent = scene.tryGetMeshRenderer(entity);
-            auto transformComponent = scene.tryGetTransform(entity);
+            const auto* meshComponent = scene.tryGetMeshRenderer(entity);
+            const auto* transformComponent = scene.tryGetTransform(entity);
             if (!meshComponent || !transformComponent)  continue;
             if (!meshComponent->visible)  continue;
 
