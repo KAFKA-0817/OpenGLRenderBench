@@ -6,6 +6,7 @@
 
 #include <iostream>
 
+#include "../../core/Log.hpp"
 #include "../../core/file_io.hpp"
 #include <glm/gtc/type_ptr.hpp>
 
@@ -114,11 +115,16 @@ namespace renderer {
             }
             id_ = new_program;
 
-            std::cout << "[Shader] Reload succeeded: "
-                      << vertex_path_ << " | " << fragment_path_ << '\n';
+            core::Log::getInstance().write(
+                "Shader",
+                "Reload succeeded: " + vertex_path_.string() + " | " + fragment_path_.string()
+            );
             return true;
         } catch (const std::exception& e) {
-            std::cerr << "[Shader] Reload failed: " << e.what() << '\n';
+            core::Log::getInstance().write(
+                "Shader",
+                "Reload failed: " + std::string(e.what())
+            );
             return false;
         }
     }

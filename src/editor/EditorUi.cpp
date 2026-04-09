@@ -4,21 +4,29 @@
 
 #include "EditorUi.hpp"
 
+#include <algorithm>
 #include <array>
+#include <cmath>
+#include <cstdio>
+
+#include <glm/gtc/type_ptr.hpp>
 
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "misc/cpp/imgui_stdlib.h"
+#include "ImGuizmo.h"
 
 namespace editor {
     namespace {
         constexpr glm::vec3 kDefaultDirectionalLightRotation{-70.0f, 33.0f, 0.0f};
         constexpr glm::vec3 kDefaultPointLightPosition{0.0f, 1.0f, 0.0f};
+        constexpr float kDirectionalLightHelperLength = 1.8f;
 
         TransformComponent makeDirectionalLightTransform() {
-            TransformComponent transform{};
-            transform.rotation = kDefaultDirectionalLightRotation;
-            return transform;
+            return TransformComponent::fromEulerDegrees(
+                glm::vec3(0.0f, 0.0f, 0.0f),
+                kDefaultDirectionalLightRotation
+            );
         }
 
         TransformComponent makePointLightTransform() {
@@ -55,9 +63,282 @@ namespace editor {
                 renderer.setPreviewMode(renderer::PreviewMode::GEmissive);
             }
         }
+
+        float sanitizeUniformScale(const float scale) {
+            return std::max(scale, 0.001f);
+        }
+
+        float extractUniformScale(const glm::vec3& scale) {
+            return sanitizeUniformScale((scale.x + scale.y + scale.z) / 3.0f);
+        }
+
+        glm::quat extractRotationQuaternion(const glm::mat4& matrix) {
+            const glm::vec3 basis_x = glm::vec3(matrix[0]);
+            const glm::vec3 basis_y = glm::vec3(matrix[1]);
+            const glm::vec3 basis_z = glm::vec3(matrix[2]);
+
+            const float scale_x = glm::length(basis_x);
+            const float scale_y = glm::length(basis_y);
+            const float scale_z = glm::length(basis_z);
+
+            glm::mat3 rotation_matrix(1.0f);
+            if (scale_x > 1e-6f) {
+                rotation_matrix[0] = basis_x / scale_x;
+            }
+            if (scale_y > 1e-6f) {
+                rotation_matrix[1] = basis_y / scale_y;
+            }
+            if (scale_z > 1e-6f) {
+                rotation_matrix[2] = basis_z / scale_z;
+            }
+
+            return glm::normalize(glm::quat_cast(rotation_matrix));
+        }
+
+        ImGuizmo::OPERATION toImGuizmoOperation(const GizmoOperation operation) {
+            switch (operation) {
+                case GizmoOperation::Translate:
+                    return ImGuizmo::TRANSLATE;
+                case GizmoOperation::Rotate:
+                    return ImGuizmo::ROTATE;
+                case GizmoOperation::Scale:
+                    return ImGuizmo::SCALEU;
+                default:
+                    return ImGuizmo::TRANSLATE;
+            }
+        }
+
+        ImGuizmo::MODE toImGuizmoMode(const GizmoMode mode) {
+            switch (mode) {
+                case GizmoMode::Local:
+                    return ImGuizmo::LOCAL;
+                case GizmoMode::World:
+                    return ImGuizmo::WORLD;
+                default:
+                    return ImGuizmo::LOCAL;
+            }
+        }
+
+        void applyGizmoShortcuts(EditorState& state) {
+            if (!state.viewport_focused || state.gizmo_using || ImGui::GetIO().WantTextInput) {
+                return;
+            }
+
+            if (ImGui::IsKeyPressed(ImGuiKey_W)) {
+                state.gizmo_operation = GizmoOperation::Translate;
+            }
+            if (ImGui::IsKeyPressed(ImGuiKey_E)) {
+                state.gizmo_operation = GizmoOperation::Rotate;
+            }
+            if (ImGui::IsKeyPressed(ImGuiKey_R)) {
+                state.gizmo_operation = GizmoOperation::Scale;
+            }
+            if (ImGui::IsKeyPressed(ImGuiKey_Q)) {
+                state.gizmo_mode = (state.gizmo_mode == GizmoMode::Local) ? GizmoMode::World : GizmoMode::Local;
+            }
+        }
+
+        void drawGizmoToolbar(EditorState& state) {
+            ImGui::AlignTextToFramePadding();
+            ImGui::TextUnformatted("Gizmo");
+            ImGui::SameLine();
+            if (ImGui::RadioButton("Translate", state.gizmo_operation == GizmoOperation::Translate)) {
+                state.gizmo_operation = GizmoOperation::Translate;
+            }
+            ImGui::SameLine();
+            if (ImGui::RadioButton("Rotate", state.gizmo_operation == GizmoOperation::Rotate)) {
+                state.gizmo_operation = GizmoOperation::Rotate;
+            }
+            ImGui::SameLine();
+            if (ImGui::RadioButton("Scale", state.gizmo_operation == GizmoOperation::Scale)) {
+                state.gizmo_operation = GizmoOperation::Scale;
+            }
+
+            ImGui::SameLine();
+            ImGui::BeginDisabled(state.gizmo_operation == GizmoOperation::Scale);
+            if (ImGui::RadioButton("Local", state.gizmo_mode == GizmoMode::Local)) {
+                state.gizmo_mode = GizmoMode::Local;
+            }
+            ImGui::SameLine();
+            if (ImGui::RadioButton("World", state.gizmo_mode == GizmoMode::World)) {
+                state.gizmo_mode = GizmoMode::World;
+            }
+            ImGui::EndDisabled();
+            ImGui::Separator();
+        }
+
+        void updateTransformFromGizmoMatrix(TransformComponent& transform, const glm::mat4& matrix) {
+            const glm::vec3 basis_x = glm::vec3(matrix[0]);
+            const glm::vec3 basis_y = glm::vec3(matrix[1]);
+            const glm::vec3 basis_z = glm::vec3(matrix[2]);
+            const float uniform_scale = sanitizeUniformScale((
+                glm::length(basis_x) +
+                glm::length(basis_y) +
+                glm::length(basis_z)
+            ) / 3.0f);
+
+            transform.position = glm::vec3(matrix[3]);
+            transform.rotation = extractRotationQuaternion(matrix);
+            transform.scale = glm::vec3(uniform_scale);
+        }
+
+        void drawTransformGizmo(Scene& scene, const renderer::Camera& camera, EditorState& state) {
+            state.gizmo_over = false;
+            state.gizmo_using = false;
+
+            if (state.selectedEntity == kInvalidEntity || !scene.isAlive(state.selectedEntity)) {
+                return;
+            }
+
+            auto* transform = scene.tryGetTransform(state.selectedEntity);
+            if (!transform) {
+                return;
+            }
+
+            const glm::vec2 viewport_size = state.viewport_bounds_max - state.viewport_bounds_min;
+            if (viewport_size.x <= 0.0f || viewport_size.y <= 0.0f) {
+                return;
+            }
+
+            glm::mat4 model_matrix = transform->modelMatrix();
+            const glm::mat4 view = camera.getViewMatrix();
+            const glm::mat4 projection = camera.getProjectionMatrix();
+            const ImGuizmo::OPERATION operation = toImGuizmoOperation(state.gizmo_operation);
+            const ImGuizmo::MODE mode = (state.gizmo_operation == GizmoOperation::Scale)
+                                            ? ImGuizmo::LOCAL
+                                            : toImGuizmoMode(state.gizmo_mode);
+
+            ImGuizmo::SetOrthographic(false);
+            ImGuizmo::SetDrawlist();
+            ImGuizmo::SetRect(
+                state.viewport_bounds_min.x,
+                state.viewport_bounds_min.y,
+                viewport_size.x,
+                viewport_size.y
+            );
+
+            ImGuizmo::PushID(static_cast<int>(state.selectedEntity));
+            const bool changed = ImGuizmo::Manipulate(
+                glm::value_ptr(view),
+                glm::value_ptr(projection),
+                operation,
+                mode,
+                glm::value_ptr(model_matrix)
+            );
+            state.gizmo_over = ImGuizmo::IsOver();
+            state.gizmo_using = ImGuizmo::IsUsing();
+            ImGuizmo::PopID();
+
+            if (changed) {
+                updateTransformFromGizmoMatrix(*transform, model_matrix);
+            }
+        }
+
+        void drawViewportFpsOverlay(const EditorState& state) {
+            if (state.viewport_bounds_max.x <= state.viewport_bounds_min.x ||
+                state.viewport_bounds_max.y <= state.viewport_bounds_min.y) {
+                return;
+            }
+
+            char text[32];
+            if (state.display_fps > 0.0f) {
+                std::snprintf(text, sizeof(text), "FPS: %.1f", state.display_fps);
+            } else {
+                std::snprintf(text, sizeof(text), "FPS: --");
+            }
+
+            const ImVec2 text_position(
+                state.viewport_bounds_min.x + 12.0f,
+                state.viewport_bounds_min.y + 12.0f
+            );
+            const ImVec2 text_size = ImGui::CalcTextSize(text);
+            const ImVec2 padding(8.0f, 5.0f);
+            const ImVec2 background_min(text_position.x - padding.x, text_position.y - padding.y);
+            const ImVec2 background_max(
+                text_position.x + text_size.x + padding.x,
+                text_position.y + text_size.y + padding.y
+            );
+
+            ImDrawList* draw_list = ImGui::GetWindowDrawList();
+            draw_list->AddRectFilled(background_min, background_max, IM_COL32(15, 18, 24, 180), 6.0f);
+            draw_list->AddRect(background_min, background_max, IM_COL32(255, 255, 255, 40), 6.0f);
+            draw_list->AddText(text_position, IM_COL32(235, 240, 245, 255), text);
+        }
+
+        bool projectWorldPointToViewport(
+            const glm::vec3& world_point,
+            const renderer::Camera& camera,
+            const EditorState& state,
+            ImVec2& screen_point
+        ) {
+            const glm::vec4 clip = camera.getProjectionMatrix() * camera.getViewMatrix() * glm::vec4(world_point, 1.0f);
+            if (clip.w <= 1e-5f) {
+                return false;
+            }
+
+            const glm::vec3 ndc = glm::vec3(clip) / clip.w;
+            if (ndc.z < -1.0f || ndc.z > 1.0f) {
+                return false;
+            }
+
+            const float width = state.viewport_bounds_max.x - state.viewport_bounds_min.x;
+            const float height = state.viewport_bounds_max.y - state.viewport_bounds_min.y;
+            screen_point.x = state.viewport_bounds_min.x + (ndc.x * 0.5f + 0.5f) * width;
+            screen_point.y = state.viewport_bounds_min.y + (1.0f - (ndc.y * 0.5f + 0.5f)) * height;
+            return true;
+        }
+
+        void drawSelectedDirectionalLightHelper(Scene& scene, const renderer::Camera& camera, const EditorState& state) {
+            if (state.selectedEntity == kInvalidEntity || !scene.isAlive(state.selectedEntity)) {
+                return;
+            }
+
+            if (!scene.hasDirectionalLight(state.selectedEntity)) {
+                return;
+            }
+
+            const auto* transform = scene.tryGetTransform(state.selectedEntity);
+            if (!transform) {
+                return;
+            }
+
+            const glm::vec3 direction = transform->forwardDirection();
+            const glm::vec3 end = transform->position;
+            const glm::vec3 start = end - direction * kDirectionalLightHelperLength;
+
+            ImVec2 start_screen{};
+            ImVec2 end_screen{};
+            if (!projectWorldPointToViewport(start, camera, state, start_screen) ||
+                !projectWorldPointToViewport(end, camera, state, end_screen)) {
+                return;
+            }
+
+            const ImU32 shaft_color = IM_COL32(255, 221, 87, 235);
+            const ImU32 head_color = IM_COL32(255, 245, 195, 255);
+            ImDrawList* draw_list = ImGui::GetWindowDrawList();
+            draw_list->AddLine(start_screen, end_screen, shaft_color, 2.5f);
+            draw_list->AddCircleFilled(end_screen, 4.0f, head_color);
+
+            const ImVec2 delta(end_screen.x - start_screen.x, end_screen.y - start_screen.y);
+            const float delta_length_sq = delta.x * delta.x + delta.y * delta.y;
+            if (delta_length_sq <= 1e-4f) {
+                return;
+            }
+
+            const float inv_delta_length = 1.0f / std::sqrt(delta_length_sq);
+            const ImVec2 dir(delta.x * inv_delta_length, delta.y * inv_delta_length);
+            const ImVec2 perp(-dir.y, dir.x);
+            const float head_length = 12.0f;
+            const float head_half_width = 5.0f;
+            const ImVec2 arrow_base(end_screen.x - dir.x * head_length, end_screen.y - dir.y * head_length);
+            const ImVec2 left(arrow_base.x + perp.x * head_half_width, arrow_base.y + perp.y * head_half_width);
+            const ImVec2 right(arrow_base.x - perp.x * head_half_width, arrow_base.y - perp.y * head_half_width);
+            draw_list->AddTriangleFilled(end_screen, left, right, shaft_color);
+        }
     }
 
     void EditorUI::draw() {
+        ImGuizmo::BeginFrame();
         drawDockSpace();
         if (state_.show_hierarchy) {
             drawHierarchy();
@@ -67,6 +348,17 @@ namespace editor {
         }
         if (state_.show_viewport) {
             drawViewport();
+        } else {
+            state_.viewport_hovered = false;
+            state_.viewport_focused = false;
+            state_.viewport_content_hovered = false;
+            state_.gizmo_over = false;
+            state_.gizmo_using = false;
+            state_.viewport_bounds_min = {0.0f, 0.0f};
+            state_.viewport_bounds_max = {0.0f, 0.0f};
+        }
+        if (state_.show_console) {
+            drawConsole();
         }
     }
 
@@ -100,13 +392,17 @@ namespace editor {
             ImGuiID dock_left_id = ImGui::DockBuilderSplitNode(
                 dock_main_id, ImGuiDir_Left, 0.20f, nullptr, &dock_main_id
             );
+            ImGuiID dock_bottom_id = ImGui::DockBuilderSplitNode(
+                dock_main_id, ImGuiDir_Down, 0.22f, nullptr, &dock_main_id
+            );
             ImGuiID dock_right_id = ImGui::DockBuilderSplitNode(
                 dock_main_id, ImGuiDir_Right, 0.25f, nullptr, &dock_main_id
             );
 
             ImGui::DockBuilderDockWindow("Hierarchy", dock_left_id);
-            ImGui::DockBuilderDockWindow("Inspector", dock_right_id);
+            ImGui::DockBuilderDockWindow("Console", dock_bottom_id);
             ImGui::DockBuilderDockWindow("Viewport", dock_main_id);
+            ImGui::DockBuilderDockWindow("Inspector", dock_right_id);
 
             ImGui::DockBuilderFinish(dockspace_id);
             dockspace_initialized_ = true;
@@ -130,6 +426,7 @@ namespace editor {
                 ImGui::MenuItem("Hierarchy", nullptr, &state_.show_hierarchy);
                 ImGui::MenuItem("Inspector", nullptr, &state_.show_inspector);
                 ImGui::MenuItem("Viewport", nullptr, &state_.show_viewport);
+                ImGui::MenuItem("Console", nullptr, &state_.show_console);
                 ImGui::EndMenu();
             }
             ImGui::EndMenuBar();
@@ -183,6 +480,10 @@ namespace editor {
             const bool selected = (state_.selectedEntity == entity);
             if (ImGui::Selectable(label.c_str(), selected)) {
                 state_.selectedEntity = entity;
+            }
+            if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+                state_.selectedEntity = entity;
+                commands_frame_.writable().frame_selected = true;
             }
 
             if (ImGui::BeginPopupContextItem()) {
@@ -329,12 +630,13 @@ namespace editor {
             }
 
             ImGui::DragFloat3("Position", &transform->position.x, 0.1f);
-            ImGui::DragFloat3("Rotation", &transform->rotation.x, 0.5f);
-            float uniform_scale = transform->scale.x;
+            glm::vec3 rotation_degrees = transform->eulerDegrees();
+            if (ImGui::DragFloat3("Rotation", &rotation_degrees.x, 0.5f)) {
+                transform->setEulerDegrees(rotation_degrees);
+            }
+            float uniform_scale = extractUniformScale(transform->scale);
             if (ImGui::DragFloat("Scale", &uniform_scale, 0.05f)) {
-                if (uniform_scale < 0.001f) {
-                    uniform_scale = 0.001f;
-                }
+                uniform_scale = sanitizeUniformScale(uniform_scale);
                 transform->scale = glm::vec3(uniform_scale);
             }
         }
@@ -469,19 +771,30 @@ namespace editor {
 
     void EditorUI::drawViewport() {
         if (!ImGui::Begin("Viewport", &state_.show_viewport)) {
+            state_.viewport_hovered = false;
+            state_.viewport_focused = false;
+            state_.viewport_content_hovered = false;
+            state_.gizmo_over = false;
+            state_.gizmo_using = false;
             ImGui::End();
             return;
         }
 
-        const ImVec2 avail = ImGui::GetContentRegionAvail();
-        state_.viewport_size = {
-            static_cast<int>(avail.x),
-            static_cast<int>(avail.y)
-        };
         state_.viewport_hovered = ImGui::IsWindowHovered();
         state_.viewport_focused = ImGui::IsWindowFocused();
+        applyGizmoShortcuts(state_);
+        drawGizmoToolbar(state_);
+
+        const ImVec2 avail = ImGui::GetContentRegionAvail();
+        state_.viewport_size = {
+            std::max(0, static_cast<int>(avail.x)),
+            std::max(0, static_cast<int>(avail.y))
+        };
 
         const GLuint texture_id = renderer_.outputTexture();
+        state_.viewport_content_hovered = false;
+        state_.viewport_bounds_min = {0.0f, 0.0f};
+        state_.viewport_bounds_max = {0.0f, 0.0f};
 
         if (texture_id != 0 && avail.x > 0.0f && avail.y > 0.0f) {
             ImGui::Image(
@@ -490,11 +803,52 @@ namespace editor {
                 ImVec2(0.0f, 1.0f),
                 ImVec2(1.0f, 0.0f)
             );
+
+            const ImVec2 image_min = ImGui::GetItemRectMin();
+            const ImVec2 image_max = ImGui::GetItemRectMax();
+            state_.viewport_bounds_min = {image_min.x, image_min.y};
+            state_.viewport_bounds_max = {image_max.x, image_max.y};
+            state_.viewport_content_hovered = ImGui::IsMouseHoveringRect(image_min, image_max);
+
+            drawSelectedDirectionalLightHelper(scene_, camera_, state_);
+            drawTransformGizmo(scene_, camera_, state_);
+            drawViewportFpsOverlay(state_);
         } else {
+            state_.gizmo_over = false;
+            state_.gizmo_using = false;
             ImGui::TextUnformatted("No viewport image available.");
         }
 
 
+        ImGui::End();
+    }
+
+    void EditorUI::drawConsole() {
+        if (!ImGui::Begin("Console", &state_.show_console)) {
+            ImGui::End();
+            return;
+        }
+
+        const auto lines = core::Log::getInstance().snapshot();
+        if (lines.empty()) {
+            ImGui::TextUnformatted("No logs.");
+            ImGui::End();
+            return;
+        }
+
+        if (ImGui::Button("Clear")) {
+            core::Log::getInstance().clear();
+            ImGui::End();
+            return;
+        }
+
+        ImGui::Separator();
+        if (ImGui::BeginChild("ConsoleScrollRegion", ImVec2(0.0f, 0.0f), ImGuiChildFlags_None, ImGuiWindowFlags_HorizontalScrollbar)) {
+            for (const auto& line : lines) {
+                ImGui::TextUnformatted(line.c_str());
+            }
+        }
+        ImGui::EndChild();
         ImGui::End();
     }
 } // editor

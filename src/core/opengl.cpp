@@ -4,8 +4,10 @@
 
 #include <stdexcept>
 #include "opengl.hpp"
+#include "Log.hpp"
 
 #include <iostream>
+#include <sstream>
 
 namespace {
 
@@ -61,22 +63,24 @@ namespace {
             return;
         }
 
-        std::cerr
-            << "[OpenGL Debug] "
+        std::ostringstream stream;
+        stream
             << "[Source: " << debugSourceToString(source) << "] "
             << "[Type: " << debugTypeToString(type) << "] "
             << "[Severity: " << debugSeverityToString(severity) << "] "
             << "[ID: " << id << "] "
-            << message << '\n';
+            << message;
+        core::Log::getInstance().write("OpenGL", stream.str());
     }
 
 } // namespace
 
 namespace core {
     void glfwErrorCallback(int error, const char* description) {
-        std::cerr << "[GLFW Error] (" << error << ") "
-                  << (description ? description : "Unknown error")
-                  << '\n';
+        std::ostringstream stream;
+        stream << '(' << error << ") "
+               << (description ? description : "Unknown error");
+        Log::getInstance().write("GLFW", stream.str());
     }
 
     OpenGLContext::OpenGLContext() {
@@ -109,7 +113,7 @@ namespace core {
         glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
 
         if (!(flags & GL_CONTEXT_FLAG_DEBUG_BIT)) {
-            std::cerr << "[OpenGL Debug] Debug context is not available.\n";
+            Log::getInstance().write("OpenGL", "Debug context is not available.");
             return;
         }
 
@@ -119,6 +123,6 @@ namespace core {
         glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE,
                               0, nullptr, GL_TRUE);
 
-        std::cerr << "[OpenGL Debug] Debug output enabled.\n";
+        Log::getInstance().write("OpenGL", "Debug output enabled.");
     }
 }

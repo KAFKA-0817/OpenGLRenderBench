@@ -16,7 +16,8 @@ namespace renderer {
         OrbitController(OrbitController&&) noexcept = delete;
         OrbitController& operator=(OrbitController&&) noexcept = delete;
 
-        void update();
+        void update(float scroll_delta = 0.0f);
+        void focusTarget(const glm::vec3& target);
         void reset();
         void setDistance(float distance) noexcept { distance_ = distance; }
         void setRotateSpeed(float rotate_speed) noexcept { rotate_speed_ = rotate_speed; }
@@ -42,7 +43,6 @@ namespace renderer {
         void applyOrbit(float delta_x, float delta_y);
         void applyPan(float delta_x, float delta_y);
         void applyZoom(float scroll_delta);
-        static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
     private:
         GLFWwindow* window_ = nullptr;
@@ -60,7 +60,6 @@ namespace renderer {
         bool first_mouse_ = true;
         double last_x_ = 0.0;
         double last_y_ = 0.0;
-        float pending_scroll_delta_ = 0.0f;
     };
 } // renderer
 

@@ -6,7 +6,6 @@
 
 #include <algorithm>
 
-#include <glm/ext/matrix_transform.hpp>
 #include <glm/geometric.hpp>
 
 namespace editor {
@@ -14,12 +13,7 @@ namespace editor {
         constexpr glm::vec3 kDefaultDirectionalLightDirection{-0.2f, -1.0f, -0.3f};
 
         glm::vec3 computeForwardDirection(const TransformComponent& transform) {
-            glm::mat4 rotation_matrix(1.0f);
-            rotation_matrix = glm::rotate(rotation_matrix, glm::radians(transform.rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
-            rotation_matrix = glm::rotate(rotation_matrix, glm::radians(transform.rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
-            rotation_matrix = glm::rotate(rotation_matrix, glm::radians(transform.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
-
-            const glm::vec3 rotated = glm::vec3(rotation_matrix * glm::vec4(0.0f, 0.0f, -1.0f, 0.0f));
+            const glm::vec3 rotated = transform.forwardDirection();
             const float length = glm::length(rotated);
             if (length <= 1e-4f) {
                 return glm::normalize(kDefaultDirectionalLightDirection);

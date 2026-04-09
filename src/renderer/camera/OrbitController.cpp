@@ -6,19 +6,19 @@
 
 #include <algorithm>
 
-#include "../../core/glfw_globals.hpp"
-
 namespace renderer {
     OrbitController::OrbitController(GLFWwindow* window, Camera* camera)
         :window_(window), camera_(camera)
     {
-        core::glfw_orbit_controller_map[window_] = this;
-        glfwSetScrollCallback(window_, scroll_callback);
         updateCamera();
     }
 
-    OrbitController::~OrbitController() {
-        1+1;
+    OrbitController::~OrbitController() {}
+
+    void OrbitController::focusTarget(const glm::vec3& target) {
+        target_ = target;
+        first_mouse_ = true;
+        updateCamera();
     }
 
     void OrbitController::reset() {
@@ -27,7 +27,6 @@ namespace renderer {
         yaw_ = glm::radians(0.0f);
         pitch_ = glm::radians(36.0f);
         first_mouse_ = true;
-        pending_scroll_delta_ = 0.0f;
         updateCamera();
     }
 
@@ -74,7 +73,7 @@ namespace renderer {
         camera_->setFront(front);
     }
 
-    void OrbitController::update() {
+    void OrbitController::update(const float scroll_delta) {
         double cursor_x = 0.0;
         double cursor_y = 0.0;
         glfwGetCursorPos(window_, &cursor_x, &cursor_y);
@@ -89,8 +88,6 @@ namespace renderer {
 
         const bool left_pressed = glfwGetMouseButton(window_, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
         const bool middle_pressed = glfwGetMouseButton(window_, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
-        const bool r_pressed = glfwGetKey(window_, GLFW_KEY_R) == GLFW_PRESS;
-
         if (left_pressed) {
             applyOrbit(delta_x, delta_y);
         }
@@ -98,20 +95,12 @@ namespace renderer {
         if (middle_pressed) {
             applyPan(delta_x, delta_y);
         }
-        if (std::abs(pending_scroll_delta_) > 1e-6f) {
-            applyZoom(pending_scroll_delta_);
-            pending_scroll_delta_ = 0.0f;
-        }
-        if (r_pressed) {
-            reset();
+        if (std::abs(scroll_delta) > 1e-6f) {
+            applyZoom(scroll_delta);
         }
         updateCamera();
 
         last_x_ = cursor_x;
         last_y_ = cursor_y;
-    }
-
-    void OrbitController::scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
-        core::glfw_orbit_controller_map[window]->pending_scroll_delta_ += static_cast<float>(yoffset);
     }
 } // renderer

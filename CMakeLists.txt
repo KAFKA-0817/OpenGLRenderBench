@@ -92,6 +92,8 @@ add_executable(PBRRenderer main.cpp
         src/editor/EditorState.hpp
         src/app/frame/EditorCommandsFrame.hpp
         src/app/frame/RenderContextFrame.hpp
+        src/core/Log.cpp
+        src/core/Log.hpp
 )
 
 target_link_libraries(PBRRenderer PRIVATE

@@ -7,6 +7,8 @@
 #include <iostream>
 #include <ostream>
 
+#include "Log.hpp"
+
 namespace core {
     ThreadPool::ThreadPool(std::size_t thread_count) {
         if (thread_count == 0) {
@@ -35,7 +37,7 @@ namespace core {
             });
         }
 
-        std::cout << "thread pool created" << std::endl;
+        Log::getInstance().write("ThreadPool", "Created with " + std::to_string(thread_count) + " workers.");
     }
 
     ThreadPool::~ThreadPool() {
@@ -49,7 +51,7 @@ namespace core {
             if (worker.joinable())
                 worker.join();
         }
-        std::cout << "thread pool destroyed" << std::endl;
+        Log::getInstance().write("ThreadPool", "Destroyed.");
     }
 
     void ThreadPool::enqueue(std::function<void()> task) {

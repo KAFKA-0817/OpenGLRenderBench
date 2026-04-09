@@ -6,8 +6,10 @@
 #define PBRRENDERER_EDITORUI_HPP
 #include "EditorState.hpp"
 #include "../app/frame/EditorCommandsFrame.hpp"
+#include "../core/Log.hpp"
 #include "../core/noncopyable.hpp"
 #include "../renderer/asset/AssetManager.hpp"
+#include "../renderer/camera/Camera.hpp"
 #include "../renderer/pipeline/Renderer.hpp"
 #include "scene/Scene.hpp"
 
@@ -17,9 +19,10 @@ class EditorUI : public core::NonCopyable{
 public:
     EditorUI(Scene& scene,
              renderer::Renderer& renderer,
+             const renderer::Camera& camera,
              renderer::AssetManager& assetManager,
              app::EditorCommandsFrame& commands_frame)
-        :scene_(scene),renderer_(renderer),assetManager_(assetManager),commands_frame_(commands_frame){}
+        :scene_(scene),renderer_(renderer),camera_(camera),assetManager_(assetManager),commands_frame_(commands_frame){}
     ~EditorUI() = default;
     EditorUI(EditorUI&& other) noexcept = delete;
     EditorUI& operator=(EditorUI&& other) noexcept = delete;
@@ -34,11 +37,13 @@ private:
     void drawHierarchy();
     void drawInspector();
     void drawViewport();
+    void drawConsole();
 
 private:
     EditorState state_;
     Scene& scene_;
     renderer::Renderer& renderer_;
+    const renderer::Camera& camera_;
     const renderer::AssetManager& assetManager_;
     app::EditorCommandsFrame& commands_frame_;
 

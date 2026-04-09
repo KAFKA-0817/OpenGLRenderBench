@@ -11,8 +11,8 @@
 #include <vector>
 
 #include "noncopyable.hpp"
-
 namespace core {
+
     class ThreadPool :public NonCopyable{
     public:
         explicit ThreadPool(std::size_t thread_count);

@@ -10,6 +10,7 @@
 namespace app {
     struct EditorCommands {
         bool reload_shaders = false;
+        bool frame_selected = false;
     };
 
     class EditorCommandsFrame : public core::NonCopyable {
