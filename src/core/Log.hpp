@@ -25,14 +25,31 @@ public:
     void write(const std::string &source, const std::string &message);
 
 private:
-    Log();
+    Log() = default;
     static std::string makeTimestamp();
     static std::string formatLine(const std::string& source, const std::string& message);
+
 private:
-    std::array<std::string,2048> lines_;
-    std::size_t firstLine_ = 0;
-    std::size_t lineCount_ = 0;
-    std::size_t nextLine_ = 0;
+    class LogBuffer : public NonCopyable {
+    public:
+        LogBuffer();
+        ~LogBuffer() = default;
+        LogBuffer(LogBuffer&&) = delete;
+        LogBuffer& operator=(LogBuffer&&) = delete;
+
+        void write(std::string message);
+        std::vector<std::string> buffer() const;
+        void clear() { firstLine_ = nextLine_; }
+        bool empty() const { return firstLine_ == nextLine_; }
+
+    private:
+        std::array<std::string,2048> lines_;
+        std::size_t firstLine_ = 0;
+        std::size_t nextLine_ = 0;
+    };
+
+private:
+    LogBuffer buffer_;
     mutable std::mutex mutex_;
 };
 

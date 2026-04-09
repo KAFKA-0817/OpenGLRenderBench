@@ -10,9 +10,6 @@
 #include <sstream>
 
 namespace core {
-    Log::Log() {
-        lines_.fill("");
-    }
 
     std::string Log::makeTimestamp() {
         const auto now = std::chrono::system_clock::now();
@@ -39,38 +36,48 @@ namespace core {
 
     void Log::clear() {
         std::lock_guard lock(mutex_);
-        lines_.fill("");
-        firstLine_ = 0;
-        lineCount_ = 0;
-        nextLine_ = 0;
+        buffer_.clear();
     }
 
     bool Log::empty() const {
         std::lock_guard lock(mutex_);
-        return lineCount_ == 0;
+        return buffer_.empty();
     }
 
     std::vector<std::string> Log::snapshot() const {
         std::lock_guard lock(mutex_);
-        std::vector<std::string> snapshot;
-        snapshot.reserve(lineCount_);
-        for (std::size_t i = 0; i < lineCount_; ++i) {
-            const std::size_t index = (firstLine_ + i) % lines_.size();
-            snapshot.push_back(lines_[index]);
-        }
-        return snapshot;
+        return buffer_.buffer();
     }
 
     void Log::write(const std::string &source, const std::string &message) {
+        std::string log = formatLine(source,message);
         std::lock_guard lock(mutex_);
-        lines_[nextLine_] = formatLine(source, message);
-        nextLine_ = (nextLine_ + 1) % lines_.size();
+        buffer_.write(std::move(log));
+    }
 
-        if (lineCount_ < lines_.size()) {
-            ++lineCount_;
-            return;
+    Log::LogBuffer::LogBuffer() {
+        lines_.fill("");
+    }
+
+    void Log::LogBuffer::write(std::string message) {
+        lines_[nextLine_] = std::move(message);
+        nextLine_ = (nextLine_ + 1) % lines_.size();
+        if (nextLine_ == firstLine_) {
+            firstLine_ = (firstLine_ + 1) % lines_.size();
+        }
+    }
+
+    std::vector<std::string> Log::LogBuffer::buffer() const {
+        if (empty()) return {};
+
+        std::vector<std::string> ret;
+        ret.reserve(lines_.size() - 1);
+        std::size_t p = firstLine_;
+        while (p != nextLine_) {
+            ret.push_back(lines_[p]);
+            p = (p + 1) % lines_.size();
         }
 
-        firstLine_ = nextLine_;
+        return ret;
     }
 } // core

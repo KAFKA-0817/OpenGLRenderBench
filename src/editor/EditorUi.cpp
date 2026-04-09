@@ -393,7 +393,7 @@ namespace editor {
                 dock_main_id, ImGuiDir_Left, 0.20f, nullptr, &dock_main_id
             );
             ImGuiID dock_bottom_id = ImGui::DockBuilderSplitNode(
-                dock_main_id, ImGuiDir_Down, 0.22f, nullptr, &dock_main_id
+                dock_main_id, ImGuiDir_Down, 0.33f, nullptr, &dock_main_id
             );
             ImGuiID dock_right_id = ImGui::DockBuilderSplitNode(
                 dock_main_id, ImGuiDir_Right, 0.25f, nullptr, &dock_main_id
