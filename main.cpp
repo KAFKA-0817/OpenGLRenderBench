@@ -4,14 +4,11 @@
 #include "src/renderer/asset/Model.hpp"
 #include "src/core/opengl.hpp"
 #include "src/core/path.hpp"
-#include "src/core/ThreadPool.hpp"
 #include "src/editor/scene/RenderSystem.hpp"
 #include "src/editor/scene/LightSystem.hpp"
 #include "src/editor/scene/Scene.hpp"
 #include "src/renderer/asset/AssetManager.hpp"
 #include "src/renderer/asset/PrimitiveFactory.hpp"
-#include "src/renderer/asset/importer/GltfImporter.hpp"
-#include "src/renderer/asset/importer/RuntimeAssetBuilder.hpp"
 #include "src/app/frame/EditorCommandsFrame.hpp"
 #include "src/app/frame/RenderContextFrame.hpp"
 #include "src/renderer/pipeline/Renderer.hpp"
@@ -22,8 +19,6 @@
 #include "src/renderer/camera/OrbitController.hpp"
 #include "src/renderer/camera/PerspectiveCamera.hpp"
 #include "src/renderer/material/BlinnPhongMaterial.hpp"
-#include "src/renderer/material/PbrMaterial.hpp"
-#include "src/renderer/material/UnlitMaterial.hpp"
 
 #include "imgui.h"
 #include "backends/imgui_impl_opengl3.h"
@@ -35,8 +30,8 @@ using namespace renderer;
 int main()
 {
     core::OpenGLContext context;
-    constexpr int width = 1920;
-    constexpr int height = 1080;
+    constexpr int width = 3840;
+    constexpr int height = 2160;
     Window window(width,height,"PBR Renderer");
     window.make_context_current();
     core::OpenGLContext::loadGlad();
@@ -103,7 +98,6 @@ int main()
     Renderer renderer(width,height);
     app::EditorCommandsFrame editor_commands_frame;
     RenderContextFrame render_context_frame;
-    renderer.setPresentToScreenEnabled(false);
     PerspectiveCamera camera;
     OrbitController controller(window.native_handle(),&camera);
     double fps_window_start_time = glfwGetTime();

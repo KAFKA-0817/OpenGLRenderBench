@@ -205,9 +205,6 @@ void main() {
     vec3 hemiLight = mix(groundColor, skyColor, hemi);
     vec3 ambient = hemiLight * baseColor * ao;
 
-    vec3 color = ambient + directLighting + emissive;
-    color = vec3(1.0) - exp(-color * 1.0);
-    color = pow(color, vec3(1.0 / 2.2));
-
-    FragColor = vec4(color, alpha);
+    vec3 radiance = ambient + directLighting + emissive;
+    FragColor = vec4(radiance, alpha);
 }

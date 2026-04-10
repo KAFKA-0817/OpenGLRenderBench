@@ -10,15 +10,16 @@
 
 namespace renderer {
     Renderer::Renderer(int width, int height)
-        :gbuffer_pass_(width, height),
-        lighting_pass_(width, height)
+        : gbuffer_pass_(width, height),
+          lighting_pass_(width, height),
+        present_pass_(width, height)
     {
-
     }
 
     void Renderer::resize(int width, int height) {
         gbuffer_pass_.resize(width, height);
         lighting_pass_.resize(width, height);
+        present_pass_.resize(width, height);
     }
 
     void Renderer::submit(const Mesh& mesh,
@@ -52,7 +53,7 @@ namespace renderer {
     GLuint Renderer::currentPreviewTexture() const noexcept {
         switch (preview_mode_) {
             case PreviewMode::FinalScene:
-                return lighting_pass_.colorAttachment();
+                return present_pass_.colorAttachment();
             case PreviewMode::GPosition:
                 return gbuffer_pass_.gPosition();
             case PreviewMode::GNormal:
@@ -64,7 +65,7 @@ namespace renderer {
             case PreviewMode::GEmissive:
                 return gbuffer_pass_.gEmissive();
             default:
-                return lighting_pass_.colorAttachment();
+                return present_pass_.colorAttachment();
         }
     }
 
@@ -92,12 +93,7 @@ namespace renderer {
                                             render_context,
                                             lighting_pass_.framebuffer());
 
-        if (present_to_screen_enabled_) {
-            present_pass_.present(currentPreviewTexture(),
-                              width(),
-                              height());
-        }
-
+        present_pass_.present(lighting_pass_.colorAttachment(),render_context.exposure);
     }
 
     void Renderer::reloadBuiltinShaders() {

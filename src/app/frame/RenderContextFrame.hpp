@@ -35,6 +35,7 @@ namespace renderer {
         DirectionalLightData directional_light{};
         std::array<PointLightData, kMaxPointLights> point_lights{};
         std::uint32_t point_light_count = 0;
+        float exposure = 1.0f;
     };
 
     class RenderContextFrame : public core::NonCopyable {
