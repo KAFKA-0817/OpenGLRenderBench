@@ -34,7 +34,6 @@ namespace renderer {
         return *this;
     }
 
-
     FrameBuffer::~FrameBuffer() {
         destroy();
     }

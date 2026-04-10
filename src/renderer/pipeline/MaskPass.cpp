@@ -14,22 +14,33 @@ namespace renderer {
 
     }
 
-    void MaskPass::execute(const RenderItem &item, const Camera &camera) {
+    void MaskPass::execute(const std::vector<RenderItem>& items, const Camera &camera) {
         glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 2, -1, "Mask Pass");
         framebuffer_.bind();
         glViewport(0, 0, framebuffer_.width(), framebuffer_.height());
         glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LEQUAL);
+        glDepthMask(GL_FALSE);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT);
+        glDisable(GL_CULL_FACE);
+        glEnable(GL_POLYGON_OFFSET_FILL);
+        glPolygonOffset(-1.0f, -1.0f);
 
         mask_shader_.use();
         mask_shader_.setMat4("u_View", camera.getViewMatrix());
         mask_shader_.setMat4("u_Projection", camera.getProjectionMatrix());
-        mask_shader_.setMat4("u_Model",item.model_matrix);
-        item.mesh->draw();
+
+        for (const auto& item : items) {
+            mask_shader_.setMat4("u_Model",item.model_matrix);
+            item.mesh->draw();
+        }
+
         framebuffer_.unbind();
-        glDepthFunc(GL_LESS);
+        glDepthMask(GL_TRUE);
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
+        glDisable(GL_POLYGON_OFFSET_FILL);
+        glPolygonOffset(0.0f, 0.0f);
         glPopDebugGroup();
     }
 } // renderer

@@ -12,6 +12,7 @@
 #include "../../core/noncopyable.hpp"
 #include "LightingPass.hpp"
 #include "MaskPass.hpp"
+#include "OutlinePass.hpp"
 
 namespace renderer {
 
@@ -51,7 +52,7 @@ namespace renderer {
 
     private:
         GLuint currentPreviewTexture() const noexcept;
-        bool isEntitySelected(const RenderContext& render_context, RenderItem& selectedItem) const;
+        bool isEntitySelected(const RenderContext& render_context, std::vector<RenderItem>& selectedItems) const;
 
     private:
         GBufferPass gbuffer_pass_;
@@ -59,7 +60,10 @@ namespace renderer {
         ForwardPass forward_pass_;
         PresentPass present_pass_;
         MaskPass mask_pass_;
+        OutlinePass outline_pass_;
 
+        bool anyEntitySelected_ = false;
+        std::vector<RenderItem> selectedItems_;
         std::vector<RenderItem> deferred_items_;
         std::vector<RenderItem> forward_items_;
         std::vector<RenderItem> transparent_items_;

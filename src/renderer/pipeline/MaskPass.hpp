@@ -15,7 +15,7 @@ namespace renderer {
 class MaskPass : public RenderPass{
 public:
     MaskPass(int width, int height);
-    void execute(const RenderItem& item, const Camera& camera);
+    void execute(const std::vector<RenderItem>& item, const Camera& camera);
     GLuint colorAttachment() const noexcept { return framebuffer_.colorAttachment(0); }
     void resize(int width, int height) { framebuffer_.resize(width, height); }
 

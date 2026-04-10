@@ -13,7 +13,8 @@ namespace renderer {
         : gbuffer_pass_(width, height),
           lighting_pass_(width, height),
         present_pass_(width, height),
-        mask_pass_(width, height)
+        mask_pass_(width, height),
+        outline_pass_(width,height)
     {
     }
 
@@ -21,6 +22,8 @@ namespace renderer {
         gbuffer_pass_.resize(width, height);
         lighting_pass_.resize(width, height);
         present_pass_.resize(width, height);
+        mask_pass_.resize(width, height);
+        outline_pass_.resize(width,height);
     }
 
     void Renderer::submit( editor::Entity id,
@@ -56,7 +59,7 @@ namespace renderer {
     GLuint Renderer::currentPreviewTexture() const noexcept {
         switch (preview_mode_) {
             case PreviewMode::FinalScene:
-                return present_pass_.colorAttachment();
+                return anyEntitySelected_? outline_pass_.colorAttachment() : present_pass_.colorAttachment();
             case PreviewMode::GPosition:
                 return gbuffer_pass_.gPosition();
             case PreviewMode::GNormal:
@@ -75,6 +78,10 @@ namespace renderer {
     }
 
     void Renderer::renderFrame(const Camera& camera, const RenderContext& render_context) {
+        anyEntitySelected_ = false;
+        selectedItems_.clear();
+        anyEntitySelected_ = isEntitySelected(render_context,selectedItems_);
+
         gbuffer_pass_.execute(deferred_items_, camera);
 
         lighting_pass_.execute(
@@ -100,10 +107,10 @@ namespace renderer {
 
         present_pass_.present(lighting_pass_.colorAttachment(),render_context.exposure);
 
-        RenderItem selectedItem;
-        if (isEntitySelected(render_context,selectedItem)) {
-            FrameBuffer::blitDepth(gbuffer_pass_.framebuffer(),mask_pass_.framebuffer());
-            mask_pass_.execute(selectedItem,camera);
+        if (anyEntitySelected_) {
+            FrameBuffer::blitDepth(lighting_pass_.framebuffer(),mask_pass_.framebuffer());
+            mask_pass_.execute(selectedItems_,camera);
+            outline_pass_.execute(mask_pass_.colorAttachment(),present_pass_.colorAttachment());
         }
     }
 
@@ -112,30 +119,33 @@ namespace renderer {
         lighting_pass_.reloadShader();
         forward_pass_.reloadShader();
         present_pass_.reloadShader();
+        mask_pass_.reloadShader();
+        outline_pass_.reloadShader();
     }
 
-    bool Renderer::isEntitySelected(const RenderContext& render_context, RenderItem& selectedItem) const {
+    bool Renderer::isEntitySelected(const RenderContext& render_context, std::vector<RenderItem>& selectedItems) const {
         if (render_context.selected == editor::kInvalidEntity) return false;
 
+        bool anySelected = false;
         for (auto&& item:deferred_items_) {
             if (item.id == render_context.selected) {
-                selectedItem = item;
-                return true;
+                selectedItems.push_back(item);
+                anySelected = true;
             }
         }
         for (auto&& item:forward_items_) {
             if (item.id == render_context.selected) {
-                selectedItem = item;
-                return true;
+                selectedItems.push_back(item);
+                anySelected = true;
             }
         }
         for (auto&& item:transparent_items_) {
             if (item.id == render_context.selected) {
-                selectedItem = item;
-                return true;
+                selectedItems.push_back(item);
+                anySelected = true;
             }
         }
 
-        return false;
+        return anySelected;
     }
 }
