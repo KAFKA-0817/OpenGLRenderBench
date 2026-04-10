@@ -53,6 +53,13 @@ namespace renderer {
         other.color_attachment_count_ = 1;
     }
 
+    void FrameBuffer::setTexParam(int index, GLuint pname, GLint param) {
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
+        glBindTexture(GL_TEXTURE_2D, color_attachments_[index]);
+        glTexParameteri(GL_TEXTURE_2D, pname, param);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
     void FrameBuffer::invalidate() {
         glGenFramebuffers(1, &fbo_);
         glBindFramebuffer(GL_FRAMEBUFFER, fbo_);

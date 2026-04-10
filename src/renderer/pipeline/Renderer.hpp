@@ -13,6 +13,7 @@
 #include "LightingPass.hpp"
 #include "MaskPass.hpp"
 #include "OutlinePass.hpp"
+#include "ShadowPass.hpp"
 
 namespace renderer {
 
@@ -61,6 +62,7 @@ namespace renderer {
         PresentPass present_pass_;
         MaskPass mask_pass_;
         OutlinePass outline_pass_;
+        ShadowPass shadow_pass_;
 
         bool anyEntitySelected_ = false;
         std::vector<RenderItem> selectedItems_;

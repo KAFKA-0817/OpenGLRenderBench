@@ -14,7 +14,8 @@ namespace renderer {
           lighting_pass_(width, height),
         present_pass_(width, height),
         mask_pass_(width, height),
-        outline_pass_(width,height)
+        outline_pass_(width,height),
+        shadow_pass_(4096,4096)
     {
     }
 
@@ -82,6 +83,15 @@ namespace renderer {
         selectedItems_.clear();
         anyEntitySelected_ = isEntitySelected(render_context,selectedItems_);
 
+        if (render_context.directional_light.valid) {
+            std::vector<RenderItem> shadow_items;
+            shadow_items.reserve(deferred_items_.size() + forward_items_.size());
+            shadow_items.insert(shadow_items.end(), deferred_items_.begin(), deferred_items_.end());
+            shadow_items.insert(shadow_items.end(), forward_items_.begin(), forward_items_.end());
+            shadow_pass_.setLightCamera(render_context.directional_light.direction);
+            shadow_pass_.execute(shadow_items);
+        }
+
         gbuffer_pass_.execute(deferred_items_, camera);
 
         lighting_pass_.execute(
@@ -121,6 +131,7 @@ namespace renderer {
         present_pass_.reloadShader();
         mask_pass_.reloadShader();
         outline_pass_.reloadShader();
+        shadow_pass_.reloadShader();
     }
 
     bool Renderer::isEntitySelected(const RenderContext& render_context, std::vector<RenderItem>& selectedItems) const {

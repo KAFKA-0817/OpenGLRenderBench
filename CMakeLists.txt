@@ -94,6 +94,8 @@ add_executable(PBRRenderer main.cpp
         src/renderer/pipeline/MaskPass.hpp
         src/renderer/pipeline/OutlinePass.cpp
         src/renderer/pipeline/OutlinePass.hpp
+        src/renderer/pipeline/ShadowPass.cpp
+        src/renderer/pipeline/ShadowPass.hpp
 )
 
 target_link_libraries(PBRRenderer PRIVATE

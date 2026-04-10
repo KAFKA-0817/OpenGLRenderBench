@@ -23,6 +23,7 @@ namespace renderer {
         void resize(int width, int height);
         int width() const noexcept { return width_; }
         int height() const noexcept { return height_; }
+        void setTexParam(int index, GLuint pname, GLint param);
 
         GLuint colorAttachment(int index = 0) const noexcept { return color_attachments_[index]; }
         GLuint depthAttachment() const noexcept { return depth_rbo_; }
