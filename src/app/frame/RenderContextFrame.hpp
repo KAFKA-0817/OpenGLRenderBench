@@ -6,12 +6,12 @@
 #define PBRRENDERER_RENDERCONTEXTFRAME_HPP
 
 #include <array>
-#include <cstddef>
 #include <cstdint>
 
 #include <glm/vec3.hpp>
 
 #include "../../core/noncopyable.hpp"
+#include "../../editor/scene/Entity.hpp"
 
 namespace renderer {
     inline constexpr std::size_t kMaxPointLights = 64;
@@ -36,6 +36,7 @@ namespace renderer {
         std::array<PointLightData, kMaxPointLights> point_lights{};
         std::uint32_t point_light_count = 0;
         float exposure = 1.0f;
+        editor::Entity selected = editor::kInvalidEntity;
     };
 
     class RenderContextFrame : public core::NonCopyable {

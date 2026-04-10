@@ -90,6 +90,8 @@ add_executable(PBRRenderer main.cpp
         src/app/frame/RenderContextFrame.hpp
         src/core/Log.cpp
         src/core/Log.hpp
+        src/renderer/pipeline/MaskPass.cpp
+        src/renderer/pipeline/MaskPass.hpp
 )
 
 target_link_libraries(PBRRenderer PRIVATE

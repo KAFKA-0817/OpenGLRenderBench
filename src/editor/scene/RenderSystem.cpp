@@ -19,7 +19,7 @@ namespace editor {
             if (!model) continue;
             for (const auto& mesh:model->meshes()) {
                 if (mesh.material_index < 0 || mesh.material_index >= static_cast<int>(model->materials().size()))  continue;
-                renderer.submit(mesh.mesh,*model->materials()[mesh.material_index],modelMatrix);
+                renderer.submit(entity,mesh.mesh,*model->materials()[mesh.material_index],modelMatrix);
             }
         }
     }

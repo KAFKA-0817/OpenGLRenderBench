@@ -11,6 +11,7 @@
 #include "../../core/opengl.hpp"
 #include "../../core/noncopyable.hpp"
 #include "LightingPass.hpp"
+#include "MaskPass.hpp"
 
 namespace renderer {
 
@@ -20,7 +21,8 @@ namespace renderer {
         GNormal = 2,
         GAlbedo = 3,
         GMaterial = 4,
-        GEmissive = 5
+        GEmissive = 5,
+        Mask = 6,
     };
 
 
@@ -38,7 +40,8 @@ namespace renderer {
         void setPreviewMode(PreviewMode mode) noexcept { preview_mode_ = mode; }
         PreviewMode previewMode() const noexcept { return preview_mode_; }
 
-        void submit(const Mesh& mesh,
+        void submit(editor::Entity id,
+                const Mesh& mesh,
                 const Material& material,
                 const glm::mat4& model_matrix);
         void clearSubmissions();
@@ -48,12 +51,14 @@ namespace renderer {
 
     private:
         GLuint currentPreviewTexture() const noexcept;
+        bool isEntitySelected(const RenderContext& render_context, RenderItem& selectedItem) const;
 
     private:
         GBufferPass gbuffer_pass_;
         LightingPass lighting_pass_;
         ForwardPass forward_pass_;
         PresentPass present_pass_;
+        MaskPass mask_pass_;
 
         std::vector<RenderItem> deferred_items_;
         std::vector<RenderItem> forward_items_;

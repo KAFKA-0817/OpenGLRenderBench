@@ -154,6 +154,7 @@ int main()
 
         renderer.clearSubmissions();
         render_context_frame.writable().camera_position = camera.position();
+        render_context_frame.writable().selected = editor_ui.state().selectedEntity;
 
         editor::LightSystem::writeLights(render_context_frame, scene);
         editor::RenderSystem::renderScene(renderer, scene);

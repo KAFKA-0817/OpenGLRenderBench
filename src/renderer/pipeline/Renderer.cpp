@@ -4,7 +4,7 @@
 
 #include "Renderer.hpp"
 
-#include "../../core/path.hpp"
+#include "../../core/Log.hpp"
 #include "../asset/PrimitiveFactory.hpp"
 #include "../material/PbrMaterial.hpp"
 
@@ -12,7 +12,8 @@ namespace renderer {
     Renderer::Renderer(int width, int height)
         : gbuffer_pass_(width, height),
           lighting_pass_(width, height),
-        present_pass_(width, height)
+        present_pass_(width, height),
+        mask_pass_(width, height)
     {
     }
 
@@ -22,10 +23,12 @@ namespace renderer {
         present_pass_.resize(width, height);
     }
 
-    void Renderer::submit(const Mesh& mesh,
+    void Renderer::submit( editor::Entity id,
+                        const Mesh& mesh,
                       const Material& material,
                       const glm::mat4& model_matrix) {
         RenderItem item{
+            id,
             &mesh,
             &material,
             model_matrix
@@ -64,6 +67,8 @@ namespace renderer {
                 return gbuffer_pass_.gMaterial();
             case PreviewMode::GEmissive:
                 return gbuffer_pass_.gEmissive();
+            case PreviewMode::Mask:
+                return mask_pass_.colorAttachment();
             default:
                 return present_pass_.colorAttachment();
         }
@@ -94,6 +99,12 @@ namespace renderer {
                                             lighting_pass_.framebuffer());
 
         present_pass_.present(lighting_pass_.colorAttachment(),render_context.exposure);
+
+        RenderItem selectedItem;
+        if (isEntitySelected(render_context,selectedItem)) {
+            FrameBuffer::blitDepth(gbuffer_pass_.framebuffer(),mask_pass_.framebuffer());
+            mask_pass_.execute(selectedItem,camera);
+        }
     }
 
     void Renderer::reloadBuiltinShaders() {
@@ -101,5 +112,30 @@ namespace renderer {
         lighting_pass_.reloadShader();
         forward_pass_.reloadShader();
         present_pass_.reloadShader();
+    }
+
+    bool Renderer::isEntitySelected(const RenderContext& render_context, RenderItem& selectedItem) const {
+        if (render_context.selected == editor::kInvalidEntity) return false;
+
+        for (auto&& item:deferred_items_) {
+            if (item.id == render_context.selected) {
+                selectedItem = item;
+                return true;
+            }
+        }
+        for (auto&& item:forward_items_) {
+            if (item.id == render_context.selected) {
+                selectedItem = item;
+                return true;
+            }
+        }
+        for (auto&& item:transparent_items_) {
+            if (item.id == render_context.selected) {
+                selectedItem = item;
+                return true;
+            }
+        }
+
+        return false;
     }
 }

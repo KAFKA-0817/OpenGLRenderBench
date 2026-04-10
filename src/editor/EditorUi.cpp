@@ -62,6 +62,9 @@ namespace editor {
             if (ImGui::MenuItem("GEmissive", nullptr, current_mode == renderer::PreviewMode::GEmissive)) {
                 renderer.setPreviewMode(renderer::PreviewMode::GEmissive);
             }
+            if (ImGui::MenuItem("Mask", nullptr, current_mode == renderer::PreviewMode::Mask)) {
+                renderer.setPreviewMode(renderer::PreviewMode::Mask);
+            }
         }
 
         float sanitizeUniformScale(const float scale) {
