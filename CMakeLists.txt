@@ -52,10 +52,6 @@ add_executable(PBRRenderer main.cpp
         src/renderer/pipeline/RenderPass.hpp
         src/renderer/pipeline/PresentPass.cpp
         src/renderer/pipeline/PresentPass.hpp
-        src/renderer/pipeline/NormalPass.cpp
-        src/renderer/pipeline/NormalPass.hpp
-        src/renderer/pipeline/FragPosPass.cpp
-        src/renderer/pipeline/FragPosPass.hpp
         src/renderer/pipeline/RenderItem.hpp
         src/renderer/pipeline/GBufferPass.cpp
         src/renderer/pipeline/GBufferPass.hpp

@@ -5,7 +5,6 @@
 #ifndef PBRRENDERER_RENDER_HPP
 #define PBRRENDERER_RENDER_HPP
 #include "ForwardPass.hpp"
-#include "FragPosPass.hpp"
 #include "GBufferPass.hpp"
 #include "PresentPass.hpp"
 #include "../../app/frame/RenderContextFrame.hpp"
