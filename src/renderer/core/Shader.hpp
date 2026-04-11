@@ -33,7 +33,7 @@ namespace renderer {
         static GLuint buildProgramFromFiles(const std::filesystem::path& vertex_path, const std::filesystem::path& fragment_path);
 
     private:
-        GLuint id_;
+        GLuint id_ = 0;
         std::filesystem::path vertex_path_;
         std::filesystem::path fragment_path_;
     };

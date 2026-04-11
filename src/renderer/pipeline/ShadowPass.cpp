@@ -6,6 +6,7 @@
 
 #include "../../core/path.hpp"
 #include "../camera/OrthographicCamera.hpp"
+#include <glm/geometric.hpp>
 
 namespace renderer {
     ShadowPass::ShadowPass(int width, int height)
@@ -15,8 +16,32 @@ namespace renderer {
 
     }
 
-    void ShadowPass::setLightCamera(const glm::vec3& direction) {
-        //todo set light view camera
+    void ShadowPass::setLightCamera(const Camera& view_camera, const glm::vec3& direction) {
+        constexpr float kFocusDistance = 10.0f;
+        constexpr float kHalfExtent = 20.0f;
+        constexpr float kDepthExtent = 30.0f;
+        constexpr float kNearPlane = 0.1f;
+
+        const glm::vec3 light_dir = glm::normalize(direction);
+        const glm::vec3 focus_center = view_camera.position() + view_camera.front() * kFocusDistance;
+        const glm::vec3 light_position = focus_center - light_dir * kDepthExtent;
+
+        glm::vec3 world_up(0.0f, 1.0f, 0.0f);
+        if (glm::abs(glm::dot(light_dir, world_up)) > 0.99f) {
+            world_up = glm::vec3(0.0f, 0.0f, 1.0f);
+        }
+
+        camera_ = OrthographicCamera(
+            light_position,
+            light_dir,
+            world_up,
+            -kHalfExtent,
+            kHalfExtent,
+            -kHalfExtent,
+            kHalfExtent,
+            kNearPlane,
+            kDepthExtent * 2.0f
+        );
     }
 
     void ShadowPass::execute(const std::vector<RenderItem>& render_items) const {

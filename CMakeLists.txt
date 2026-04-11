@@ -37,6 +37,8 @@ add_executable(PBRRenderer main.cpp
         src/renderer/pipeline/Renderer.hpp
         src/renderer/core/FrameBuffer.cpp
         src/renderer/core/FrameBuffer.hpp
+        src/renderer/core/ShadowFrameBuffer.cpp
+        src/renderer/core/ShadowFrameBuffer.hpp
         src/core/opengl.cpp
         src/core/path.hpp
         src/core/path.cpp

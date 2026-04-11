@@ -5,7 +5,6 @@
 #include "Renderer.hpp"
 
 #include "../../core/Log.hpp"
-#include "../asset/PrimitiveFactory.hpp"
 #include "../material/PbrMaterial.hpp"
 
 namespace renderer {
@@ -88,7 +87,7 @@ namespace renderer {
             shadow_items.reserve(deferred_items_.size() + forward_items_.size());
             shadow_items.insert(shadow_items.end(), deferred_items_.begin(), deferred_items_.end());
             shadow_items.insert(shadow_items.end(), forward_items_.begin(), forward_items_.end());
-            shadow_pass_.setLightCamera(render_context.directional_light.direction);
+            shadow_pass_.setLightCamera(camera, render_context.directional_light.direction);
             shadow_pass_.execute(shadow_items);
         }
 

@@ -95,7 +95,7 @@ int main()
     ));
     scene.addMeshRenderer(debug_cube,{&debug_cube_model,true});
 
-    Renderer renderer(width,height);
+    Renderer renderer(900,600);
     app::EditorCommandsFrame editor_commands_frame;
     RenderContextFrame render_context_frame;
     PerspectiveCamera camera;
