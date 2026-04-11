@@ -72,6 +72,8 @@ namespace renderer {
                 return gbuffer_pass_.gEmissive();
             case PreviewMode::Mask:
                 return mask_pass_.colorAttachment();
+            case PreviewMode::Shadow:
+                return shadow_pass_.colorAttachment();
             default:
                 return present_pass_.colorAttachment();
         }

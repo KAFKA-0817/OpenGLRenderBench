@@ -25,6 +25,7 @@ namespace renderer {
         GMaterial = 4,
         GEmissive = 5,
         Mask = 6,
+        Shadow = 7,
     };
 
 
