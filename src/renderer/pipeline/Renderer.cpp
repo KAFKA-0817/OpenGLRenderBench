@@ -101,6 +101,8 @@ namespace renderer {
             gbuffer_pass_.gAlbedo(),
             gbuffer_pass_.gMaterial(),
             gbuffer_pass_.gEmissive(),
+            shadow_pass_.colorAttachment(),
+            shadow_pass_.getLightSpaceMatrix(),
             render_context
         );
 

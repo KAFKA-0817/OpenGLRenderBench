@@ -28,6 +28,8 @@ namespace renderer {
                            GLuint g_albedo,
                            GLuint g_material,
                            GLuint g_emissive,
+                           GLuint shadow_map,
+                           const glm::mat4& lightSpaceMatrix,
                            const RenderContext& context) {
         glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 2, -1, "Lighting Pass");
 
@@ -42,6 +44,7 @@ namespace renderer {
         shader_.setVec3("u_ViewPos", context.camera_position);
         shader_.setInt("u_HasDirectionalLight", context.directional_light.valid ? 1 : 0);
         shader_.setInt("u_PointLightCount", static_cast<int>(context.point_light_count));
+        shader_.setMat4("u_lightSpaceMatrix", lightSpaceMatrix);
 
         if (context.directional_light.valid) {
             shader_.setVec3("u_DirectionalLight.direction", context.directional_light.direction);
@@ -77,6 +80,10 @@ namespace renderer {
         glActiveTexture(GL_TEXTURE4);
         glBindTexture(GL_TEXTURE_2D, g_emissive);
         shader_.setInt("u_GEmissive", 4);
+
+        glActiveTexture(GL_TEXTURE5);
+        glBindTexture(GL_TEXTURE_2D, shadow_map);
+        shader_.setInt("u_ShadowMap", 5);
 
         screen_quad_.draw();
 

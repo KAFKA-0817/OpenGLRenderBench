@@ -17,9 +17,9 @@ namespace renderer {
     }
 
     void ShadowPass::setLightCamera(const Camera& view_camera, const glm::vec3& direction) {
-        constexpr float kFocusDistance = 10.0f;
-        constexpr float kHalfExtent = 20.0f;
-        constexpr float kDepthExtent = 30.0f;
+        constexpr float kFocusDistance = 3.0f;
+        constexpr float kHalfExtent = 5.0f;
+        constexpr float kDepthExtent = 10.0f;
         constexpr float kNearPlane = 0.1f;
 
         const glm::vec3 light_dir = glm::normalize(direction);

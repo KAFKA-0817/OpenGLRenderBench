@@ -24,12 +24,14 @@ uniform sampler2D u_GNormal;
 uniform sampler2D u_GAlbedo;
 uniform sampler2D u_GMaterial;
 uniform sampler2D u_GEmissive;
+uniform sampler2D u_ShadowMap;
 
 uniform int u_HasDirectionalLight;
 uniform DirectionalLight u_DirectionalLight;
 uniform int u_PointLightCount;
 uniform PointLight u_PointLights[MAX_POINT_LIGHTS];
 uniform vec3 u_ViewPos;
+uniform mat4 u_lightSpaceMatrix;
 
 float DistributionGGX(vec3 N, vec3 H, float roughness) {
     float a = roughness * roughness;
@@ -100,6 +102,22 @@ float ComputePointAttenuation(PointLight light, float distanceToLight) {
     return falloff * falloff;
 }
 
+float ComputeDirectionLightShadowFactor(vec3 fragPos){
+    vec4 lightSpacePos = u_lightSpaceMatrix * vec4(fragPos,1.0);
+    lightSpacePos /= lightSpacePos.w;
+    lightSpacePos = lightSpacePos * 0.5 + 0.5;
+    if (lightSpacePos.x < 0.0 || lightSpacePos.x > 1.0 ||
+        lightSpacePos.y < 0.0 || lightSpacePos.y > 1.0 ||
+        lightSpacePos.z < 0.0 || lightSpacePos.z > 1.0) {
+        return 1.0;
+    }
+
+    float curDepth = lightSpacePos.z;
+    float sampleDepth = texture(u_ShadowMap,vec2(lightSpacePos.x,lightSpacePos.y)).r;
+    if(curDepth <= sampleDepth+0.005) return 1.0;
+    return 0.0;
+}
+
 void main() {
     vec3 fragPos = texture(u_GPosition, vTexCoord).rgb;
     vec3 normal = texture(u_GNormal, vTexCoord).rgb * 2.0 - 1.0;
@@ -119,7 +137,9 @@ void main() {
     if (u_HasDirectionalLight == 1) {
         vec3 L = normalize(-u_DirectionalLight.direction);
         vec3 radiance = u_DirectionalLight.color * u_DirectionalLight.intensity;
-        directLighting += EvaluatePbrDirect(N, V, L, radiance, albedo, metallic, roughness);
+        vec3 irradiance_directionalLight = EvaluatePbrDirect(N, V, L, radiance, albedo, metallic, roughness);
+        irradiance_directionalLight *= ComputeDirectionLightShadowFactor(fragPos);
+        directLighting += irradiance_directionalLight;
     }
 
     for (int i = 0; i < u_PointLightCount; ++i) {

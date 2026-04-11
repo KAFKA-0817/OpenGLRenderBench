@@ -23,6 +23,8 @@ namespace renderer {
                      GLuint g_albedo,
                      GLuint g_material,
                      GLuint g_emissive,
+                     GLuint shadow_map,
+                     const glm::mat4& lightSpaceMatrix,
                      const RenderContext& context);
 
         const FrameBuffer& framebuffer() const noexcept { return framebuffer_; }
