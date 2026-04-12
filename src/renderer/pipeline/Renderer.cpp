@@ -73,7 +73,7 @@ namespace renderer {
             case PreviewMode::GEmissive:
                 return gbuffer_pass_.gEmissive();
             case PreviewMode::SSAO:
-                return ssao_pass_.colorAttachment();
+                return ssao_enabled_ ? ssao_pass_.colorAttachment() : white_texture_.id();
             case PreviewMode::Mask:
                 return mask_pass_.colorAttachment();
             case PreviewMode::Shadow:
@@ -98,11 +98,15 @@ namespace renderer {
         }
 
         gbuffer_pass_.execute(deferred_items_, camera);
-        ssao_pass_.execute(
-            gbuffer_pass_.gPosition(),
-            gbuffer_pass_.gNormal(),
-            camera
-        );
+        GLuint ssao_texture = white_texture_.id();
+        if (ssao_enabled_) {
+            ssao_pass_.execute(
+                gbuffer_pass_.gPosition(),
+                gbuffer_pass_.gNormal(),
+                camera
+            );
+            ssao_texture = ssao_pass_.colorAttachment();
+        }
 
         lighting_pass_.execute(
             gbuffer_pass_.gPosition(),
@@ -110,7 +114,7 @@ namespace renderer {
             gbuffer_pass_.gAlbedo(),
             gbuffer_pass_.gMaterial(),
             gbuffer_pass_.gEmissive(),
-            ssao_pass_.colorAttachment(),
+            ssao_texture,
             shadow_pass_.colorAttachment(),
             shadow_pass_.getLightSpaceMatrix(),
             render_context

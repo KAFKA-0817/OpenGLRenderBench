@@ -423,6 +423,11 @@ namespace editor {
                     commands_frame_.writable().reload_shaders = true;
                 }
 
+                bool ssao_enabled = renderer_.ssaoEnabled();
+                if (ImGui::MenuItem("Enable SSAO", nullptr, &ssao_enabled)) {
+                    renderer_.setSSAOEnabled(ssao_enabled);
+                }
+
                 if (ImGui::BeginMenu("Preview")) {
                     drawPreviewModeMenu(renderer_);
                     ImGui::EndMenu();

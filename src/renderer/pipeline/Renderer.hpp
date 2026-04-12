@@ -10,6 +10,7 @@
 #include "../../app/frame/RenderContextFrame.hpp"
 #include "../../core/opengl.hpp"
 #include "../../core/noncopyable.hpp"
+#include "../asset/Texture2D.hpp"
 #include "LightingPass.hpp"
 #include "MaskPass.hpp"
 #include "OutlinePass.hpp"
@@ -44,6 +45,8 @@ namespace renderer {
         void setClearColor(float r, float g, float b, float a) noexcept { clear_r_ = r; clear_g_ = g; clear_b_ = b; clear_a_ = a; }
         void setPreviewMode(PreviewMode mode) noexcept { preview_mode_ = mode; }
         PreviewMode previewMode() const noexcept { return preview_mode_; }
+        void setSSAOEnabled(bool enabled) noexcept { ssao_enabled_ = enabled; }
+        bool ssaoEnabled() const noexcept { return ssao_enabled_; }
 
         void submit(editor::Entity id,
                 const Mesh& mesh,
@@ -73,6 +76,8 @@ namespace renderer {
         std::vector<RenderItem> deferred_items_;
         std::vector<RenderItem> forward_items_;
         std::vector<RenderItem> transparent_items_;
+        Texture2D white_texture_ = Texture2D::createWhite1x1();
+        bool ssao_enabled_ = true;
         PreviewMode preview_mode_ = PreviewMode::FinalScene;
         float clear_r_ = 0.1f;
         float clear_g_ = 0.1f;
