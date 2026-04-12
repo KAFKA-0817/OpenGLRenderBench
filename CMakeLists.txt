@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 4.1)
-project(PBRRenderer)
+project(OpenGLRenderBench)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -14,7 +14,7 @@ add_subdirectory("external/tinygltf")
 add_subdirectory("external/imgui")
 add_subdirectory("external/imguizmo")
 
-add_executable(PBRRenderer main.cpp
+add_executable(OpenGLRenderBench main.cpp
         src/core/file_io.hpp
         src/core/noncopyable.hpp
         src/renderer/core/Shader.cpp
@@ -104,7 +104,7 @@ add_executable(PBRRenderer main.cpp
         src/renderer/pipeline/ShadowPass.hpp
 )
 
-target_link_libraries(PBRRenderer PRIVATE
+target_link_libraries(OpenGLRenderBench PRIVATE
         glfw
         glad
         glm::glm
