@@ -13,6 +13,7 @@
 #include "LightingPass.hpp"
 #include "MaskPass.hpp"
 #include "OutlinePass.hpp"
+#include "SSAOPass.hpp"
 #include "ShadowPass.hpp"
 
 namespace renderer {
@@ -24,8 +25,9 @@ namespace renderer {
         GAlbedo = 3,
         GMaterial = 4,
         GEmissive = 5,
-        Mask = 6,
-        Shadow = 7,
+        SSAO = 6,
+        Mask = 7,
+        Shadow = 8,
     };
 
 
@@ -60,6 +62,7 @@ namespace renderer {
         GBufferPass gbuffer_pass_;
         LightingPass lighting_pass_;
         ForwardPass forward_pass_;
+        SSAOPass ssao_pass_;
         PresentPass present_pass_;
         MaskPass mask_pass_;
         OutlinePass outline_pass_;

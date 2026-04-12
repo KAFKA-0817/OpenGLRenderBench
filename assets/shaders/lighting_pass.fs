@@ -24,6 +24,7 @@ uniform sampler2D u_GNormal;
 uniform sampler2D u_GAlbedo;
 uniform sampler2D u_GMaterial;
 uniform sampler2D u_GEmissive;
+uniform sampler2D u_SSAOMap;
 uniform sampler2D u_ShadowMap;
 
 uniform int u_HasDirectionalLight;
@@ -124,10 +125,11 @@ void main() {
     vec3 albedo = texture(u_GAlbedo, vTexCoord).rgb;
     vec3 material = texture(u_GMaterial, vTexCoord).rgb;
     vec3 emissive = texture(u_GEmissive, vTexCoord).rgb;
+    float ssao = texture(u_SSAOMap, vTexCoord).r;
 
     float metallic = material.r;
     float roughness = clamp(material.g, 0.04, 1.0);
-    float ao = material.b;
+    float ao = material.b * ssao;
 
     vec3 N = normalize(normal);
     vec3 V = normalize(u_ViewPos - fragPos);

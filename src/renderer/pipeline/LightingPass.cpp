@@ -28,6 +28,7 @@ namespace renderer {
                            GLuint g_albedo,
                            GLuint g_material,
                            GLuint g_emissive,
+                           GLuint ssao_map,
                            GLuint shadow_map,
                            const glm::mat4& lightSpaceMatrix,
                            const RenderContext& context) {
@@ -82,8 +83,12 @@ namespace renderer {
         shader_.setInt("u_GEmissive", 4);
 
         glActiveTexture(GL_TEXTURE5);
+        glBindTexture(GL_TEXTURE_2D, ssao_map);
+        shader_.setInt("u_SSAOMap", 5);
+
+        glActiveTexture(GL_TEXTURE6);
         glBindTexture(GL_TEXTURE_2D, shadow_map);
-        shader_.setInt("u_ShadowMap", 5);
+        shader_.setInt("u_ShadowMap", 6);
 
         screen_quad_.draw();
 

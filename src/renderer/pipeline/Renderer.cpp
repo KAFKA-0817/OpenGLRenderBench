@@ -11,6 +11,7 @@ namespace renderer {
     Renderer::Renderer(int width, int height)
         : gbuffer_pass_(width, height),
           lighting_pass_(width, height),
+        ssao_pass_(width, height),
         present_pass_(width, height),
         mask_pass_(width, height),
         outline_pass_(width,height),
@@ -21,6 +22,7 @@ namespace renderer {
     void Renderer::resize(int width, int height) {
         gbuffer_pass_.resize(width, height);
         lighting_pass_.resize(width, height);
+        ssao_pass_.resize(width, height);
         present_pass_.resize(width, height);
         mask_pass_.resize(width, height);
         outline_pass_.resize(width,height);
@@ -70,6 +72,8 @@ namespace renderer {
                 return gbuffer_pass_.gMaterial();
             case PreviewMode::GEmissive:
                 return gbuffer_pass_.gEmissive();
+            case PreviewMode::SSAO:
+                return ssao_pass_.colorAttachment();
             case PreviewMode::Mask:
                 return mask_pass_.colorAttachment();
             case PreviewMode::Shadow:
@@ -94,6 +98,11 @@ namespace renderer {
         }
 
         gbuffer_pass_.execute(deferred_items_, camera);
+        ssao_pass_.execute(
+            gbuffer_pass_.gPosition(),
+            gbuffer_pass_.gNormal(),
+            camera
+        );
 
         lighting_pass_.execute(
             gbuffer_pass_.gPosition(),
@@ -101,6 +110,7 @@ namespace renderer {
             gbuffer_pass_.gAlbedo(),
             gbuffer_pass_.gMaterial(),
             gbuffer_pass_.gEmissive(),
+            ssao_pass_.colorAttachment(),
             shadow_pass_.colorAttachment(),
             shadow_pass_.getLightSpaceMatrix(),
             render_context
@@ -130,6 +140,7 @@ namespace renderer {
     void Renderer::reloadBuiltinShaders() {
         gbuffer_pass_.reloadShader();
         lighting_pass_.reloadShader();
+        ssao_pass_.reloadShader();
         forward_pass_.reloadShader();
         present_pass_.reloadShader();
         mask_pass_.reloadShader();

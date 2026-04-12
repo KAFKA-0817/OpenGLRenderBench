@@ -23,6 +23,7 @@ namespace renderer {
                      GLuint g_albedo,
                      GLuint g_material,
                      GLuint g_emissive,
+                     GLuint ssao_map,
                      GLuint shadow_map,
                      const glm::mat4& lightSpaceMatrix,
                      const RenderContext& context);
