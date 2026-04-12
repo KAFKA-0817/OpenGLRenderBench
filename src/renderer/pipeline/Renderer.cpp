@@ -100,6 +100,7 @@ namespace renderer {
         }
 
         gbuffer_pass_.execute(deferred_items_, camera);
+
         GLuint ssao_texture = white_texture_.id();
         if (ssao_enabled_) {
             ssao_pass_.execute(
