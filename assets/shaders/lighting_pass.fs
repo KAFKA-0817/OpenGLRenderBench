@@ -162,9 +162,9 @@ void main() {
     vec3 skyColor = vec3(0.10, 0.12, 0.16);
     vec3 groundColor = vec3(0.13, 0.13, 0.13);
     vec3 hemiLight = mix(groundColor, skyColor, hemi);
-    float abient_intensity = 3.0;
+    float abient_intensity = 1.0;
     vec3 ambient = abient_intensity * hemiLight * albedo * ao;
 
-    vec3 radiance = ambient + directLighting + emissive;
+    vec3 radiance = ambient + directLighting + emissive*10.0;
     FragColor = vec4(radiance, 1.0);
 }

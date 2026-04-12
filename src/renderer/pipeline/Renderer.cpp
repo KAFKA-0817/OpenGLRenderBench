@@ -11,6 +11,7 @@ namespace renderer {
     Renderer::Renderer(int width, int height)
         : gbuffer_pass_(width, height),
           lighting_pass_(width, height),
+        bloom_pass_(width, height),
         ssao_pass_(width, height),
         present_pass_(width, height),
         mask_pass_(width, height),
@@ -22,6 +23,7 @@ namespace renderer {
     void Renderer::resize(int width, int height) {
         gbuffer_pass_.resize(width, height);
         lighting_pass_.resize(width, height);
+        bloom_pass_.resize(width, height);
         ssao_pass_.resize(width, height);
         present_pass_.resize(width, height);
         mask_pass_.resize(width, height);
@@ -132,7 +134,8 @@ namespace renderer {
                                             render_context,
                                             lighting_pass_.framebuffer());
 
-        present_pass_.present(lighting_pass_.colorAttachment(),render_context.exposure);
+        bloom_pass_.execute(lighting_pass_.colorAttachment());
+        present_pass_.present(bloom_pass_.colorAttachment(),render_context.exposure);
 
         if (anyEntitySelected_) {
             FrameBuffer::blitDepth(lighting_pass_.framebuffer(),mask_pass_.framebuffer());
@@ -144,6 +147,7 @@ namespace renderer {
     void Renderer::reloadBuiltinShaders() {
         gbuffer_pass_.reloadShader();
         lighting_pass_.reloadShader();
+        bloom_pass_.reloadShader();
         ssao_pass_.reloadShader();
         forward_pass_.reloadShader();
         present_pass_.reloadShader();

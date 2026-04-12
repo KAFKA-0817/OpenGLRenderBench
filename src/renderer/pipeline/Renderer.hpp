@@ -4,6 +4,7 @@
 
 #ifndef PBRRENDERER_RENDER_HPP
 #define PBRRENDERER_RENDER_HPP
+#include "BloomPass.hpp"
 #include "ForwardPass.hpp"
 #include "GBufferPass.hpp"
 #include "PresentPass.hpp"
@@ -65,6 +66,7 @@ namespace renderer {
         GBufferPass gbuffer_pass_;
         LightingPass lighting_pass_;
         ForwardPass forward_pass_;
+        BloomPass bloom_pass_;
         SSAOPass ssao_pass_;
         PresentPass present_pass_;
         MaskPass mask_pass_;

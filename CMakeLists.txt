@@ -61,6 +61,8 @@ add_executable(PBRRenderer main.cpp
         src/renderer/pipeline/LightingPass.hpp
         src/renderer/pipeline/ForwardPass.cpp
         src/renderer/pipeline/ForwardPass.hpp
+        src/renderer/pipeline/BloomPass.cpp
+        src/renderer/pipeline/BloomPass.hpp
         src/renderer/pipeline/SSAOPass.cpp
         src/renderer/pipeline/SSAOPass.hpp
         src/renderer/material/ForwardMaterial.hpp
