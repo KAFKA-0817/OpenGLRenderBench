@@ -22,7 +22,9 @@ namespace renderer {
 
         virtual void bind(const glm::mat4& model,
                           const Camera& camera,
-                          const RenderContext& context) const = 0;
+                          const RenderContext& context,
+                          GLuint shadow_map,
+                          const glm::mat4& light_space_matrix) const = 0;
 
         Shader& shader() noexcept { return shader_; }
         const Shader& shader() const noexcept { return shader_; }

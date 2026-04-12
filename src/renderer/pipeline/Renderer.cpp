@@ -127,6 +127,8 @@ namespace renderer {
         forward_pass_.execute(forward_items_,
                               camera,
                               render_context,
+                              shadow_pass_.colorAttachment(),
+                              shadow_pass_.getLightSpaceMatrix(),
                               lighting_pass_.framebuffer());
 
         forward_pass_.executeTransparentPbr(transparent_items_,

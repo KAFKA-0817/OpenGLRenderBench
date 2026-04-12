@@ -95,6 +95,8 @@ namespace renderer {
     void ForwardPass::execute(const std::vector<RenderItem>& forward_items,
                               const Camera& camera,
                               const RenderContext& render_context,
+                              GLuint shadow_map,
+                              const glm::mat4& light_space_matrix,
                               const FrameBuffer& target_framebuffer)
     {
         glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 3, -1, "Forward Pass");
@@ -115,7 +117,7 @@ namespace renderer {
                 continue;
             }
 
-            material->bind(item.model_matrix, camera, render_context);
+            material->bind(item.model_matrix, camera, render_context, shadow_map, light_space_matrix);
             item.mesh->draw();
         }
 

@@ -61,6 +61,8 @@ int main()
     asset_manager.requestModel(core::ProjectPaths::model("ABeautifulGame\\ABeautifulGame.gltf"));
     asset_manager.requestModel(core::ProjectPaths::model("Lantern.glb"));
     asset_manager.requestModel(core::ProjectPaths::model("BoomBox.glb"));
+    asset_manager.requestModel(core::ProjectPaths::model("TwoSidedPlane\\TwoSidedPlane.gltf"));
+    asset_manager.requestModel(core::ProjectPaths::model("MarbleCube\\Cube.gltf"));
 
     editor::Scene scene;
     editor::Entity main_light = scene.createEntity();

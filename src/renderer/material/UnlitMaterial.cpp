@@ -12,8 +12,14 @@ namespace renderer {
 
     }
 
-    void UnlitMaterial::bind(const glm::mat4 &model, const Camera& camera, const RenderContext& context) const {
+    void UnlitMaterial::bind(const glm::mat4 &model,
+                             const Camera& camera,
+                             const RenderContext& context,
+                             GLuint shadow_map,
+                             const glm::mat4& light_space_matrix) const {
         (void)context;
+        (void)shadow_map;
+        (void)light_space_matrix;
 
         shader_.use();
         shader_.setMat4("u_Model", model);

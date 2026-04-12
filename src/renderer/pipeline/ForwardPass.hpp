@@ -21,6 +21,8 @@ namespace renderer {
         void execute(const std::vector<RenderItem>& forward_items,
                      const Camera& camera,
                      const RenderContext& render_context,
+                     GLuint shadow_map,
+                     const glm::mat4& light_space_matrix,
                      const FrameBuffer& target_framebuffer);
 
         void executeTransparentPbr(const std::vector<RenderItem>& transparent_items,

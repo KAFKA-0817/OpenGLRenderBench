@@ -35,9 +35,11 @@ uniform int u_PointLightCount;
 uniform PointLight u_PointLights[MAX_POINT_LIGHTS];
 uniform MaterialData u_Material;
 uniform vec3 u_ViewPos;
+uniform mat4 u_LightSpaceMatrix;
 
 uniform sampler2D u_DiffuseMap;
 uniform sampler2D u_SpecularMap;
+uniform sampler2D u_ShadowMap;
 
 vec3 EvaluateBlinnPhong(vec3 N,
                         vec3 V,
@@ -62,6 +64,22 @@ float ComputePointAttenuation(PointLight light, float distanceToLight) {
     return falloff * falloff;
 }
 
+float ComputeDirectionLightShadowFactor(vec3 fragPos) {
+    vec4 lightSpacePos = u_LightSpaceMatrix * vec4(fragPos, 1.0);
+    lightSpacePos /= lightSpacePos.w;
+    lightSpacePos = lightSpacePos * 0.5 + 0.5;
+
+    if (lightSpacePos.x < 0.0 || lightSpacePos.x > 1.0 ||
+        lightSpacePos.y < 0.0 || lightSpacePos.y > 1.0 ||
+        lightSpacePos.z < 0.0 || lightSpacePos.z > 1.0) {
+        return 1.0;
+    }
+
+    float currentDepth = lightSpacePos.z;
+    float sampleDepth = texture(u_ShadowMap, lightSpacePos.xy).r;
+    return currentDepth <= sampleDepth + 0.005 ? 1.0 : 0.0;
+}
+
 void main() {
     vec3 N = normalize(vNormal);
     vec3 V = normalize(u_ViewPos - vFragPos);
@@ -81,7 +99,9 @@ void main() {
     if (u_HasDirectionalLight == 1) {
         vec3 L = normalize(-u_DirectionalLight.direction);
         vec3 radiance = u_DirectionalLight.color * u_DirectionalLight.intensity;
-        directLighting += EvaluateBlinnPhong(N, V, L, radiance, albedo, specularColor, u_Material.shininess);
+        vec3 directionalLighting = EvaluateBlinnPhong(N, V, L, radiance, albedo, specularColor, u_Material.shininess);
+        directionalLighting *= ComputeDirectionLightShadowFactor(vFragPos);
+        directLighting += directionalLighting;
     }
 
     for (int i = 0; i < u_PointLightCount; ++i) {

@@ -16,7 +16,9 @@ namespace renderer {
 
         void bind(const glm::mat4& model,
                   const Camera& camera,
-                  const RenderContext& context) const override;
+                  const RenderContext& context,
+                  GLuint shadow_map,
+                  const glm::mat4& light_space_matrix) const override;
 
         RenderPath renderPath() const noexcept override { return RenderPath::Forward; }
 

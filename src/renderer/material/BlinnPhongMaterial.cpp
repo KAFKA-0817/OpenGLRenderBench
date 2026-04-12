@@ -35,12 +35,15 @@ namespace renderer {
 
     void BlinnPhongMaterial::bind(const glm::mat4& model,
                                   const Camera& camera,
-                                  const RenderContext& context) const {
+                                  const RenderContext& context,
+                                  GLuint shadow_map,
+                                  const glm::mat4& light_space_matrix) const {
         shader_.use();
 
         shader_.setMat4("u_Model", model);
         shader_.setMat4("u_View", camera.getViewMatrix());
         shader_.setMat4("u_Projection", camera.getProjectionMatrix());
+        shader_.setMat4("u_LightSpaceMatrix", light_space_matrix);
 
         shader_.setVec3("u_ViewPos", context.camera_position);
         bindLights(shader_, context);
@@ -61,6 +64,10 @@ namespace renderer {
             specular_map_->bind(1);
             shader_.setInt("u_SpecularMap", 1);
         }
+
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, shadow_map);
+        shader_.setInt("u_ShadowMap", 2);
     }
 
 }
