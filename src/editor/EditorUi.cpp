@@ -428,6 +428,11 @@ namespace editor {
                     renderer_.setSSAOEnabled(ssao_enabled);
                 }
 
+                bool bloom_enabled = renderer_.bloomEnabled();
+                if (ImGui::MenuItem("Enable Bloom", nullptr, &bloom_enabled)) {
+                    renderer_.setBloomEnabled(bloom_enabled);
+                }
+
                 if (ImGui::BeginMenu("Preview")) {
                     drawPreviewModeMenu(renderer_);
                     ImGui::EndMenu();

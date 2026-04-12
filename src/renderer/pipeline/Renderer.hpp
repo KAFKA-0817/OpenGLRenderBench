@@ -48,6 +48,8 @@ namespace renderer {
         PreviewMode previewMode() const noexcept { return preview_mode_; }
         void setSSAOEnabled(bool enabled) noexcept { ssao_enabled_ = enabled; }
         bool ssaoEnabled() const noexcept { return ssao_enabled_; }
+        void setBloomEnabled(bool enabled) noexcept { bloom_enabled_ = enabled; }
+        bool bloomEnabled() const noexcept { return bloom_enabled_; }
 
         void submit(editor::Entity id,
                 const Mesh& mesh,
@@ -80,6 +82,7 @@ namespace renderer {
         std::vector<RenderItem> transparent_items_;
         Texture2D white_texture_ = Texture2D::createWhite1x1();
         bool ssao_enabled_ = true;
+        bool bloom_enabled_ = true;
         PreviewMode preview_mode_ = PreviewMode::FinalScene;
         float clear_r_ = 0.1f;
         float clear_g_ = 0.1f;

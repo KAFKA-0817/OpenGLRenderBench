@@ -134,8 +134,12 @@ namespace renderer {
                                             render_context,
                                             lighting_pass_.framebuffer());
 
-        bloom_pass_.execute(lighting_pass_.colorAttachment());
-        present_pass_.present(bloom_pass_.colorAttachment(),render_context.exposure);
+        GLuint scene_hdr_texture = lighting_pass_.colorAttachment();
+        if (bloom_enabled_) {
+            bloom_pass_.execute(scene_hdr_texture);
+            scene_hdr_texture = bloom_pass_.colorAttachment();
+        }
+        present_pass_.present(scene_hdr_texture,render_context.exposure);
 
         if (anyEntitySelected_) {
             FrameBuffer::blitDepth(lighting_pass_.framebuffer(),mask_pass_.framebuffer());
