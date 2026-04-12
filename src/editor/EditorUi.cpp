@@ -513,6 +513,11 @@ namespace editor {
             renderer_.setBloomEnabled(bloom_enabled);
         }
 
+        bool z_pre_enabled = renderer_.zPreEnabled();
+        if (ImGui::Checkbox("Enable Z-Pre Pass", &z_pre_enabled)) {
+            renderer_.setZPreEnabled(z_pre_enabled);
+        }
+
         drawPreviewModeCombo(renderer_);
 
         ImGui::End();

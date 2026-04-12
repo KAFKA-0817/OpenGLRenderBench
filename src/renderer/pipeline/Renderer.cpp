@@ -8,8 +8,26 @@
 #include "../material/PbrMaterial.hpp"
 
 namespace renderer {
+    namespace {
+        bool shouldUseInZPre(const RenderItem& item) {
+            if (!item.mesh || !item.material) {
+                return false;
+            }
+
+            if (const auto* pbr_material = dynamic_cast<const PBRMaterial*>(item.material)) {
+                if (pbr_material->alphaMode() == AlphaMode::Blend ||
+                    pbr_material->alphaMode() == AlphaMode::Mask) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+    }
+
     Renderer::Renderer(int width, int height)
         : gbuffer_pass_(width, height),
+          z_pre_pass_(width, height),
           lighting_pass_(width, height),
         bloom_pass_(width, height),
         ssao_pass_(width, height),
@@ -22,6 +40,7 @@ namespace renderer {
 
     void Renderer::resize(int width, int height) {
         gbuffer_pass_.resize(width, height);
+        z_pre_pass_.resize(width, height);
         lighting_pass_.resize(width, height);
         bloom_pass_.resize(width, height);
         ssao_pass_.resize(width, height);
@@ -90,6 +109,21 @@ namespace renderer {
         selectedItems_.clear();
         anyEntitySelected_ = isEntitySelected(render_context,selectedItems_);
 
+        std::vector<RenderItem> z_pre_items;
+        if (z_pre_enabled_) {
+            z_pre_items.reserve(deferred_items_.size() + forward_items_.size());
+            for (const auto& item : deferred_items_) {
+                if (shouldUseInZPre(item)) {
+                    z_pre_items.push_back(item);
+                }
+            }
+            for (const auto& item : forward_items_) {
+                if (shouldUseInZPre(item)) {
+                    z_pre_items.push_back(item);
+                }
+            }
+        }
+
         if (render_context.directional_light.valid) {
             std::vector<RenderItem> shadow_items;
             shadow_items.reserve(deferred_items_.size() + forward_items_.size());
@@ -99,7 +133,15 @@ namespace renderer {
             shadow_pass_.execute(shadow_items);
         }
 
-        gbuffer_pass_.execute(deferred_items_, camera);
+        if (z_pre_enabled_ && !z_pre_items.empty()) {
+            z_pre_pass_.execute(z_pre_items, camera);
+        }
+
+        gbuffer_pass_.execute(
+            deferred_items_,
+            camera,
+            (z_pre_enabled_ && !z_pre_items.empty()) ? &z_pre_pass_.framebuffer() : nullptr
+        );
 
         GLuint ssao_texture = white_texture_.id();
         if (ssao_enabled_) {
@@ -130,7 +172,8 @@ namespace renderer {
                               render_context,
                               shadow_pass_.colorAttachment(),
                               shadow_pass_.getLightSpaceMatrix(),
-                              lighting_pass_.framebuffer());
+                              lighting_pass_.framebuffer(),
+                              z_pre_enabled_ && !z_pre_items.empty());
 
         forward_pass_.executeTransparentPbr(transparent_items_,
                                             camera,
@@ -153,6 +196,7 @@ namespace renderer {
 
     void Renderer::reloadBuiltinShaders() {
         gbuffer_pass_.reloadShader();
+        z_pre_pass_.reloadShader();
         lighting_pass_.reloadShader();
         bloom_pass_.reloadShader();
         ssao_pass_.reloadShader();

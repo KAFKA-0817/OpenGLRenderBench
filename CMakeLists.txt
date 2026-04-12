@@ -57,6 +57,8 @@ add_executable(OpenGLRenderBench main.cpp
         src/renderer/pipeline/RenderItem.hpp
         src/renderer/pipeline/GBufferPass.cpp
         src/renderer/pipeline/GBufferPass.hpp
+        src/renderer/pipeline/ZPrePass.cpp
+        src/renderer/pipeline/ZPrePass.hpp
         src/renderer/pipeline/LightingPass.cpp
         src/renderer/pipeline/LightingPass.hpp
         src/renderer/pipeline/ForwardPass.cpp

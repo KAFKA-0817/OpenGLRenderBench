@@ -23,7 +23,8 @@ namespace renderer {
                      const RenderContext& render_context,
                      GLuint shadow_map,
                      const glm::mat4& light_space_matrix,
-                     const FrameBuffer& target_framebuffer);
+                     const FrameBuffer& target_framebuffer,
+                     bool use_depth_prepass);
 
         void executeTransparentPbr(const std::vector<RenderItem>& transparent_items,
                                    const Camera& camera,

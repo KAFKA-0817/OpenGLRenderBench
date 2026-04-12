@@ -20,7 +20,8 @@ namespace renderer {
         void resize(int width, int height);
 
         void execute(const std::vector<RenderItem>& deferred_items,
-                     const Camera& camera);
+                     const Camera& camera,
+                     const FrameBuffer* depth_prepass_framebuffer = nullptr);
 
         const FrameBuffer& framebuffer() const noexcept { return framebuffer_; }
         GLuint gPosition() const noexcept { return framebuffer_.colorAttachment(0); }

@@ -19,15 +19,26 @@ namespace renderer {
         framebuffer_.resize(width, height);
     }
 
-    void GBufferPass::execute(const std::vector<RenderItem>& deferred_items, const Camera& camera)
+    void GBufferPass::execute(const std::vector<RenderItem>& deferred_items,
+                              const Camera& camera,
+                              const FrameBuffer* depth_prepass_framebuffer)
     {
         glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 1, -1, "GBuffer Pass");
 
         framebuffer_.bind();
         glViewport(0, 0, framebuffer_.width(), framebuffer_.height());
         glEnable(GL_DEPTH_TEST);
+        glDepthMask(depth_prepass_framebuffer ? GL_FALSE : GL_TRUE);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        if (depth_prepass_framebuffer) {
+            FrameBuffer::blitDepth(*depth_prepass_framebuffer, framebuffer_);
+            framebuffer_.bind();
+            glClear(GL_COLOR_BUFFER_BIT);
+            glDepthFunc(GL_EQUAL);
+        } else {
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glDepthFunc(GL_LESS);
+        }
 
         pbr_gbuffer_shader_.use();
         pbr_gbuffer_shader_.setMat4("u_View", camera.getViewMatrix());
@@ -101,6 +112,8 @@ namespace renderer {
 
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
+        glDepthMask(GL_TRUE);
+        glDepthFunc(GL_LESS);
         framebuffer_.unbind();
         glPopDebugGroup();
     }

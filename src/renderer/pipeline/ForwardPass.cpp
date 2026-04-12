@@ -97,14 +97,18 @@ namespace renderer {
                               const RenderContext& render_context,
                               GLuint shadow_map,
                               const glm::mat4& light_space_matrix,
-                              const FrameBuffer& target_framebuffer)
+                              const FrameBuffer& target_framebuffer,
+                              const bool use_depth_prepass)
     {
         glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 3, -1, "Forward Pass");
 
         target_framebuffer.bind();
         glViewport(0, 0, target_framebuffer.width(), target_framebuffer.height());
         glEnable(GL_DEPTH_TEST);
-        glDepthMask(GL_TRUE);
+        glDepthMask(use_depth_prepass ? GL_FALSE : GL_TRUE);
+        glDepthFunc(use_depth_prepass ? GL_EQUAL : GL_LESS);
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
         glDisable(GL_BLEND);
 
         for (const auto& item : forward_items) {
@@ -121,6 +125,8 @@ namespace renderer {
             item.mesh->draw();
         }
 
+        glDepthMask(GL_TRUE);
+        glDepthFunc(GL_LESS);
         target_framebuffer.unbind();
         glPopDebugGroup();
     }
@@ -134,6 +140,7 @@ namespace renderer {
         target_framebuffer.bind();
         glViewport(0, 0, target_framebuffer.width(), target_framebuffer.height());
         glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
         glDepthMask(GL_FALSE);
         glEnable(GL_BLEND);
         glBlendEquation(GL_FUNC_ADD);
@@ -179,6 +186,7 @@ namespace renderer {
         }
 
         glDepthMask(GL_TRUE);
+        glDepthFunc(GL_LESS);
         glDisable(GL_BLEND);
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);

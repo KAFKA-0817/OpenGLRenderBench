@@ -8,6 +8,7 @@
 #include "ForwardPass.hpp"
 #include "GBufferPass.hpp"
 #include "PresentPass.hpp"
+#include "ZPrePass.hpp"
 #include "../../app/frame/RenderContextFrame.hpp"
 #include "../../core/opengl.hpp"
 #include "../../core/noncopyable.hpp"
@@ -50,6 +51,8 @@ namespace renderer {
         bool ssaoEnabled() const noexcept { return ssao_enabled_; }
         void setBloomEnabled(bool enabled) noexcept { bloom_enabled_ = enabled; }
         bool bloomEnabled() const noexcept { return bloom_enabled_; }
+        void setZPreEnabled(bool enabled) noexcept { z_pre_enabled_ = enabled; }
+        bool zPreEnabled() const noexcept { return z_pre_enabled_; }
 
         void submit(editor::Entity id,
                 const Mesh& mesh,
@@ -66,6 +69,7 @@ namespace renderer {
 
     private:
         GBufferPass gbuffer_pass_;
+        ZPrePass z_pre_pass_;
         LightingPass lighting_pass_;
         ForwardPass forward_pass_;
         BloomPass bloom_pass_;
@@ -83,6 +87,7 @@ namespace renderer {
         Texture2D white_texture_ = Texture2D::createWhite1x1();
         bool ssao_enabled_ = true;
         bool bloom_enabled_ = true;
+        bool z_pre_enabled_ = false;
         PreviewMode preview_mode_ = PreviewMode::FinalScene;
         float clear_r_ = 0.1f;
         float clear_g_ = 0.1f;
