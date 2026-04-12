@@ -24,6 +24,7 @@ namespace editor {
         Entity selectedEntity = kInvalidEntity;
 
         bool show_hierarchy = true;
+        bool show_renderer = true;
         bool show_inspector = true;
         bool show_viewport = true;
         bool show_console = true;

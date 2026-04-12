@@ -34,6 +34,7 @@ public:
 
 private:
     void drawDockSpace();
+    void drawRendererPanel();
     void drawHierarchy();
     void drawInspector();
     void drawViewport();

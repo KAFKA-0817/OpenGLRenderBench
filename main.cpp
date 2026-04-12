@@ -50,6 +50,9 @@ int main()
     // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
     ImGui::StyleColorsDark();
+    constexpr float kUiScale = 1.5f;
+    ImGui::GetStyle().ScaleAllSizes(kUiScale);
+    io.FontGlobalScale = kUiScale;
 
     ImGui_ImplGlfw_InitForOpenGL(window.native_handle(), true);
     ImGui_ImplOpenGL3_Init("#version 410");

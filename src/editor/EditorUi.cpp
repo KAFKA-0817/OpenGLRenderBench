@@ -73,6 +73,59 @@ namespace editor {
             }
         }
 
+        const char* previewModeLabel(const renderer::PreviewMode mode) {
+            switch (mode) {
+                case renderer::PreviewMode::FinalScene:
+                    return "Final Scene";
+                case renderer::PreviewMode::GPosition:
+                    return "GPosition";
+                case renderer::PreviewMode::GNormal:
+                    return "GNormal";
+                case renderer::PreviewMode::GAlbedo:
+                    return "GAlbedo";
+                case renderer::PreviewMode::GMaterial:
+                    return "GMaterial";
+                case renderer::PreviewMode::GEmissive:
+                    return "GEmissive";
+                case renderer::PreviewMode::SSAO:
+                    return "SSAO";
+                case renderer::PreviewMode::Mask:
+                    return "Mask";
+                case renderer::PreviewMode::Shadow:
+                    return "Shadow";
+                default:
+                    return "Final Scene";
+            }
+        }
+
+        void drawPreviewModeCombo(renderer::Renderer& renderer) {
+            const auto current_mode = renderer.previewMode();
+            if (ImGui::BeginCombo("Preview", previewModeLabel(current_mode))) {
+                constexpr std::array modes = {
+                    renderer::PreviewMode::FinalScene,
+                    renderer::PreviewMode::GPosition,
+                    renderer::PreviewMode::GNormal,
+                    renderer::PreviewMode::GAlbedo,
+                    renderer::PreviewMode::GMaterial,
+                    renderer::PreviewMode::GEmissive,
+                    renderer::PreviewMode::SSAO,
+                    renderer::PreviewMode::Mask,
+                    renderer::PreviewMode::Shadow,
+                };
+
+                for (const auto mode : modes) {
+                    const bool selected = (mode == current_mode);
+                    if (ImGui::Selectable(previewModeLabel(mode), selected)) {
+                        renderer.setPreviewMode(mode);
+                    }
+                    if (selected) {
+                        ImGui::SetItemDefaultFocus();
+                    }
+                }
+                ImGui::EndCombo();
+            }
+        }
+
         float sanitizeUniformScale(const float scale) {
             return std::max(scale, 0.001f);
         }
@@ -349,6 +402,9 @@ namespace editor {
     void EditorUI::draw() {
         ImGuizmo::BeginFrame();
         drawDockSpace();
+        if (state_.show_renderer) {
+            drawRendererPanel();
+        }
         if (state_.show_hierarchy) {
             drawHierarchy();
         }
@@ -401,6 +457,10 @@ namespace editor {
             ImGuiID dock_left_id = ImGui::DockBuilderSplitNode(
                 dock_main_id, ImGuiDir_Left, 0.20f, nullptr, &dock_main_id
             );
+            ImGuiID dock_left_top_id = dock_left_id;
+            ImGuiID dock_left_bottom_id = ImGui::DockBuilderSplitNode(
+                dock_left_id, ImGuiDir_Down, 0.5f, nullptr, &dock_left_top_id
+            );
             ImGuiID dock_bottom_id = ImGui::DockBuilderSplitNode(
                 dock_main_id, ImGuiDir_Down, 0.33f, nullptr, &dock_main_id
             );
@@ -408,7 +468,8 @@ namespace editor {
                 dock_main_id, ImGuiDir_Right, 0.25f, nullptr, &dock_main_id
             );
 
-            ImGui::DockBuilderDockWindow("Hierarchy", dock_left_id);
+            ImGui::DockBuilderDockWindow("Renderer", dock_left_top_id);
+            ImGui::DockBuilderDockWindow("Hierarchy", dock_left_bottom_id);
             ImGui::DockBuilderDockWindow("Console", dock_bottom_id);
             ImGui::DockBuilderDockWindow("Viewport", dock_main_id);
             ImGui::DockBuilderDockWindow("Inspector", dock_right_id);
@@ -418,30 +479,8 @@ namespace editor {
         }
 
         if (ImGui::BeginMenuBar()) {
-            if (ImGui::BeginMenu("Render")) {
-                if (ImGui::MenuItem("Reload Shaders")) {
-                    commands_frame_.writable().reload_shaders = true;
-                }
-
-                bool ssao_enabled = renderer_.ssaoEnabled();
-                if (ImGui::MenuItem("Enable SSAO", nullptr, &ssao_enabled)) {
-                    renderer_.setSSAOEnabled(ssao_enabled);
-                }
-
-                bool bloom_enabled = renderer_.bloomEnabled();
-                if (ImGui::MenuItem("Enable Bloom", nullptr, &bloom_enabled)) {
-                    renderer_.setBloomEnabled(bloom_enabled);
-                }
-
-                if (ImGui::BeginMenu("Preview")) {
-                    drawPreviewModeMenu(renderer_);
-                    ImGui::EndMenu();
-                }
-
-                ImGui::EndMenu();
-            }
-
             if (ImGui::BeginMenu("Window")) {
+                ImGui::MenuItem("Renderer", nullptr, &state_.show_renderer);
                 ImGui::MenuItem("Hierarchy", nullptr, &state_.show_hierarchy);
                 ImGui::MenuItem("Inspector", nullptr, &state_.show_inspector);
                 ImGui::MenuItem("Viewport", nullptr, &state_.show_viewport);
@@ -450,6 +489,31 @@ namespace editor {
             }
             ImGui::EndMenuBar();
         }
+
+        ImGui::End();
+    }
+
+    void EditorUI::drawRendererPanel() {
+        if (!ImGui::Begin("Renderer", &state_.show_renderer)) {
+            ImGui::End();
+            return;
+        }
+
+        if (ImGui::Button("Reload Shaders")) {
+            commands_frame_.writable().reload_shaders = true;
+        }
+
+        bool ssao_enabled = renderer_.ssaoEnabled();
+        if (ImGui::Checkbox("Enable SSAO", &ssao_enabled)) {
+            renderer_.setSSAOEnabled(ssao_enabled);
+        }
+
+        bool bloom_enabled = renderer_.bloomEnabled();
+        if (ImGui::Checkbox("Enable Bloom", &bloom_enabled)) {
+            renderer_.setBloomEnabled(bloom_enabled);
+        }
+
+        drawPreviewModeCombo(renderer_);
 
         ImGui::End();
     }
