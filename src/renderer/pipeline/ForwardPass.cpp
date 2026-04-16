@@ -9,6 +9,7 @@
 
 #include <glm/geometric.hpp>
 
+#include "../../core/Log.hpp"
 #include "../../core/path.hpp"
 #include "../material/ForwardMaterial.hpp"
 #include "../material/PbrMaterial.hpp"
@@ -195,6 +196,7 @@ namespace renderer {
     }
 
     bool ForwardPass::reloadShader() {
+        core::Log::getInstance().write("Shader","Forward Shader Reloaded");
         return transparent_pbr_shader_.reload();
     }
 } // renderer

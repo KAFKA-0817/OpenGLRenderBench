@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include "../../core/Log.hpp"
 #include "../../core/path.hpp"
 #include "../asset/PrimitiveFactory.hpp"
 
@@ -129,6 +130,7 @@ namespace renderer {
     bool SSAOPass::reloadShader() {
         const bool ssao_ok = ssao_shader_.reload();
         const bool blur_ok = blur_shader_.reload();
+        core::Log::getInstance().write("Shader","SSAO shader reloaded");
         return ssao_ok && blur_ok;
     }
 

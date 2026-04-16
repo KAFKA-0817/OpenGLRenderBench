@@ -18,6 +18,8 @@ namespace core {
         static std::filesystem::path shader(const std::string& filename);
         static std::filesystem::path texture(const std::string& filename);
         static std::filesystem::path model(const std::string& filename);
+
+        static std::filesystem::path normalize(const std::filesystem::path& path);
     };
 }
 

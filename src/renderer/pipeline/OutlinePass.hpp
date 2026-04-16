@@ -5,6 +5,7 @@
 #ifndef PBRRENDERER_OUTLINEPASS_HPP
 #define PBRRENDERER_OUTLINEPASS_HPP
 #include "RenderPass.hpp"
+#include "../../core/Log.hpp"
 #include "../asset/Mesh.hpp"
 #include "../core/FrameBuffer.hpp"
 #include "../core/Shader.hpp"
@@ -19,7 +20,10 @@ public:
     GLuint colorAttachment() const noexcept { return framebuffer_.colorAttachment(0); }
 
     void resize(int width, int height) { framebuffer_.resize(width, height); }
-    bool reloadShader() { return outline_shader_.reload();}
+    bool reloadShader() {
+        core::Log::getInstance().write("Shader","Outline shader reloaded");
+        return outline_shader_.reload();
+    }
     Shader& shader() noexcept { return outline_shader_; }
     const Shader& shader() const noexcept { return outline_shader_; }
 

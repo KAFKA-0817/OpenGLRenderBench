@@ -4,6 +4,7 @@
 
 #include "BloomPass.hpp"
 
+#include "../../core/Log.hpp"
 #include "../../core/path.hpp"
 #include "../asset/PrimitiveFactory.hpp"
 
@@ -113,6 +114,7 @@ namespace renderer {
         const bool bright_ok = bright_shader_.reload();
         const bool blur_ok = blur_shader_.reload();
         const bool composite_ok = composite_shader_.reload();
+        core::Log::getInstance().write("Shader","BloomShader Reloaded");
         return bright_ok && blur_ok && composite_ok;
     }
 } // renderer

@@ -4,6 +4,7 @@
 
 #include "GBufferPass.hpp"
 
+#include "../../core/Log.hpp"
 #include "../../core/path.hpp"
 #include "../material/PBRMaterial.hpp"
 
@@ -119,6 +120,7 @@ namespace renderer {
     }
 
     bool GBufferPass::reloadShader() {
+        core::Log::getInstance().write("Shader","GBuffer shader reloaded");
         return pbr_gbuffer_shader_.reload();
     }
 } // renderer

@@ -42,6 +42,8 @@ add_executable(OpenGLRenderBench main.cpp
         src/core/opengl.cpp
         src/core/path.hpp
         src/core/path.cpp
+        src/core/DirectoryWatcher.cpp
+        src/core/DirectoryWatcher.hpp
         src/renderer/material/Material.hpp
         src/renderer/material/UnlitMaterial.cpp
         src/renderer/material/UnlitMaterial.hpp

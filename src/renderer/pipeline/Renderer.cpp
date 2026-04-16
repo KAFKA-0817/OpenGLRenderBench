@@ -4,6 +4,8 @@
 
 #include "Renderer.hpp"
 
+#include <unordered_set>
+
 #include "../../core/Log.hpp"
 #include "../material/PbrMaterial.hpp"
 
@@ -205,6 +207,61 @@ namespace renderer {
         mask_pass_.reloadShader();
         outline_pass_.reloadShader();
         shadow_pass_.reloadShader();
+    }
+
+    void Renderer::reloadShaders(const std::vector<std::filesystem::path>& dirty_files) {
+        std::unordered_set<ShaderType> shaders_to_reload;
+        auto isShaderFile = [](const std::filesystem::path& path) {
+            const auto extension = path.extension().string();
+            return extension == ".vs" ||
+                   extension == ".fs" ||
+                   extension == ".vert" ||
+                   extension == ".frag" ||
+                   extension == ".glsl";
+        };
+        for (const auto& file:dirty_files) {
+            if (!isShaderFile(file)) continue;
+
+            const auto filename = file.stem().string();
+            auto it = MAP_FILENAME_SHADER.find(filename);
+            if (it==MAP_FILENAME_SHADER.end()) continue;
+            shaders_to_reload.insert(it->second);
+        }
+
+        for (const auto& shader:shaders_to_reload) {
+            switch (shader) {
+                case ShaderType::Bloom:
+                    bloom_pass_.reloadShader();
+                    break;
+                case ShaderType::Forward:
+                    forward_pass_.reloadShader();
+                    break;
+                case ShaderType::GBuffer:
+                    gbuffer_pass_.reloadShader();
+                    break;
+                case ShaderType::Lighting:
+                    lighting_pass_.reloadShader();
+                    break;
+                case ShaderType::Mask:
+                    mask_pass_.reloadShader();
+                    break;
+                case ShaderType::Outline:
+                    outline_pass_.reloadShader();
+                    break;
+                case ShaderType::Present:
+                    present_pass_.reloadShader();
+                    break;
+                case ShaderType::Shadow:
+                    shadow_pass_.reloadShader();
+                    break;
+                case ShaderType::SSAO:
+                    ssao_pass_.reloadShader();
+                    break;
+                case ShaderType::ZPre:
+                    z_pre_pass_.reloadShader();
+                    break;
+            }
+        }
     }
 
     bool Renderer::isEntitySelected(const RenderContext& render_context, std::vector<RenderItem>& selectedItems) const {

@@ -33,6 +33,18 @@ namespace renderer {
         Shadow = 8,
     };
 
+    enum class ShaderType {
+        Bloom,
+        Forward,
+        GBuffer,
+        Lighting,
+        Mask,
+        Outline,
+        Present,
+        Shadow,
+        SSAO,
+        ZPre
+    };
 
     class Renderer : public core::NonCopyable {
     public:
@@ -61,6 +73,7 @@ namespace renderer {
         void clearSubmissions();
         void renderFrame(const Camera& camera, const RenderContext& render_context);
         void reloadBuiltinShaders();
+        void reloadShaders(const std::vector<std::filesystem::path>&);
         GLuint outputTexture() const noexcept { return currentPreviewTexture(); }
 
     private:
@@ -93,6 +106,23 @@ namespace renderer {
         float clear_g_ = 0.1f;
         float clear_b_ = 0.1f;
         float clear_a_ = 1.0f;
+
+    private:
+        inline static const std::unordered_map<std::string,ShaderType> MAP_FILENAME_SHADER = {
+            {"bloom_extract",ShaderType::Bloom},
+            {"bloom_blur",ShaderType::Bloom},
+            {"bloom_composite",ShaderType::Bloom},
+            {"forward_pbr",ShaderType::Forward},
+            {"gbuffer_pbr",ShaderType::GBuffer},
+            {"lighting_pass",ShaderType::Lighting},
+            {"mask",ShaderType::Mask},
+            {"outline",ShaderType::Outline},
+            {"screen",ShaderType::Present},
+            {"shadow_pass",ShaderType::Shadow},
+            {"ssao",ShaderType::SSAO},
+            {"ssao_blur",ShaderType::SSAO},
+            {"z_pre",ShaderType::ZPre}
+        };
     };
 }
 

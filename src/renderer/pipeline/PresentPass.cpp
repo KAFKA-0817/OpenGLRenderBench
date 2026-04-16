@@ -4,6 +4,7 @@
 
 #include "PresentPass.hpp"
 
+#include "../../core/Log.hpp"
 #include "../../core/path.hpp"
 #include "../asset/PrimitiveFactory.hpp"
 
@@ -35,6 +36,7 @@ namespace renderer {
     }
 
     bool PresentPass::reloadShader() {
+        core::Log::getInstance().write("Shader","Present-pass shader reloaded");
         return screen_shader_.reload();
     }
 } // renderer

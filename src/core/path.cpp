@@ -36,4 +36,13 @@ namespace core {
     std::filesystem::path ProjectPaths::model(const std::string& filename) {
         return models() / filename;
     }
+
+    std::filesystem::path ProjectPaths::normalize(const std::filesystem::path& path) {
+        std::error_code ec;
+        auto normalized = std::filesystem::weakly_canonical(path, ec);
+        if (ec) {
+            normalized = path.lexically_normal();
+        }
+        return normalized;
+    }
 }

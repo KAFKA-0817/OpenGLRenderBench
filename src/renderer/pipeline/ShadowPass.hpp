@@ -5,6 +5,7 @@
 #ifndef PBRRENDERER_SHADOWPASS_HPP
 #define PBRRENDERER_SHADOWPASS_HPP
 #include "RenderItem.hpp"
+#include "../../core/Log.hpp"
 #include "../camera/OrthographicCamera.hpp"
 #include "../core/ShadowFrameBuffer.hpp"
 #include "../core/Shader.hpp"
@@ -20,7 +21,10 @@ public:
     glm::mat4 getLightSpaceMatrix() const { return camera_.getProjectionMatrix() * camera_.getViewMatrix();}
 
     GLuint colorAttachment() const noexcept { return frame_buffer_.colorAttachment(); }
-    bool reloadShader() { return shader_.reload(); }
+    bool reloadShader() {
+        core::Log::getInstance().write("Shader","Shadow-pass shader reloaded");
+        return shader_.reload();
+    }
     Shader& shader() noexcept { return shader_; }
     const Shader& shader() const noexcept { return shader_; }
 private:

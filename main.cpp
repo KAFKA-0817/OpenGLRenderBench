@@ -4,6 +4,7 @@
 #include "src/renderer/asset/Model.hpp"
 #include "src/core/opengl.hpp"
 #include "src/core/path.hpp"
+#include "src/core/DirectoryWatcher.hpp"
 #include "src/editor/scene/RenderSystem.hpp"
 #include "src/editor/scene/LightSystem.hpp"
 #include "src/editor/scene/Scene.hpp"
@@ -58,6 +59,8 @@ int main()
     ImGui_ImplOpenGL3_Init("#version 410");
 
     AssetManager asset_manager;
+    core::DirectoryWatcher shader_directory_watcher(core::ProjectPaths::shaders());
+    shader_directory_watcher.start();
     asset_manager.requestModel(core::ProjectPaths::model("ABeautifulGame\\ABeautifulGame.gltf"));
     asset_manager.requestModel(core::ProjectPaths::model("Lantern.glb"));
     asset_manager.requestModel(core::ProjectPaths::model("BoomBox.glb"));
@@ -157,6 +160,7 @@ int main()
             }
         }
 
+        renderer.reloadShaders(shader_directory_watcher.consumeDirtyFiles());
         renderer.clearSubmissions();
         render_context_frame.writable().camera_position = camera.position();
         render_context_frame.writable().selected = editor_ui.state().selectedEntity;

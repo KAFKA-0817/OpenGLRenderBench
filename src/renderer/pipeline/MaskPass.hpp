@@ -6,6 +6,7 @@
 #define PBRRENDERER_MASKPASS_HPP
 #include "RenderItem.hpp"
 #include "RenderPass.hpp"
+#include "../../core/Log.hpp"
 #include "../camera/Camera.hpp"
 #include "../core/FrameBuffer.hpp"
 #include "../core/Shader.hpp"
@@ -20,7 +21,10 @@ public:
     void resize(int width, int height) { framebuffer_.resize(width, height); }
 
     const FrameBuffer& framebuffer() const noexcept { return framebuffer_; }
-    bool reloadShader() { return mask_shader_.reload(); }
+    bool reloadShader() {
+        core::Log::getInstance().write("Shader","Mask shader reloaded");
+        return mask_shader_.reload();
+    }
     Shader& shader() noexcept { return mask_shader_; }
     const Shader& shader() const noexcept { return mask_shader_; }
 private:

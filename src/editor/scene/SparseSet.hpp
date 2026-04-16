@@ -39,7 +39,7 @@ namespace editor {
         std::vector<T> component_dense_;
     };
 
-        template<class T>
+    template<class T>
     bool SparseSet<T>::contains(Entity entity) const noexcept {
         if (entity>=entity_sparse_.size()) return false;
 

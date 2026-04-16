@@ -9,6 +9,7 @@
 
 #include "RenderItem.hpp"
 #include "RenderPass.hpp"
+#include "../../core/Log.hpp"
 #include "../camera/Camera.hpp"
 #include "../core/FrameBuffer.hpp"
 #include "../core/Shader.hpp"
@@ -22,7 +23,10 @@ namespace renderer {
         void execute(const std::vector<RenderItem>& render_items, const Camera& camera);
 
         const FrameBuffer& framebuffer() const noexcept { return framebuffer_; }
-        bool reloadShader() { return shader_.reload(); }
+        bool reloadShader() {
+            core::Log::getInstance().write("Shader","ZPre shader reloaded");
+            return shader_.reload();
+        }
 
     private:
         FrameBuffer framebuffer_;

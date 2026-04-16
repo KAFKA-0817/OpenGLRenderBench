@@ -6,6 +6,7 @@
 
 #include <string>
 
+#include "../../core/Log.hpp"
 #include "../../core/path.hpp"
 #include "../asset/PrimitiveFactory.hpp"
 
@@ -97,6 +98,7 @@ namespace renderer {
     }
 
     bool LightingPass::reloadShader() {
+        core::Log::getInstance().write("Shader","Lighting-pass shader reloaded");
         return shader_.reload();
     }
 } // renderer
