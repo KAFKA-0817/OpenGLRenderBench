@@ -5,11 +5,14 @@
 #ifndef PBRRENDERER_PATH_HPP
 #define PBRRENDERER_PATH_HPP
 #include <filesystem>
+#include <string>
 
 namespace core {
     class ProjectPaths {
     public:
-        static std::filesystem::path root();
+        static void initialize(const std::filesystem::path& executable_path);
+
+        static const std::filesystem::path& root();
         static std::filesystem::path assets();
         static std::filesystem::path shaders();
         static std::filesystem::path textures();

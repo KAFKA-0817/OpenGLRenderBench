@@ -1,5 +1,7 @@
 ﻿#include <iostream>
 
+#include <stdexcept>
+
 #include "src/renderer/core/FrameBuffer.hpp"
 #include "src/renderer/asset/Model.hpp"
 #include "src/core/opengl.hpp"
@@ -28,8 +30,14 @@
 
 using namespace renderer;
 
-int main()
+int main(int argc, char** argv)
 {
+    if (argc <= 0 || argv == nullptr || argv[0] == nullptr) {
+        throw std::runtime_error("Failed to determine executable path.");
+    }
+
+    core::ProjectPaths::initialize(argv[0]);
+
     core::OpenGLContext context;
     constexpr int width = 3840;
     constexpr int height = 2160;
