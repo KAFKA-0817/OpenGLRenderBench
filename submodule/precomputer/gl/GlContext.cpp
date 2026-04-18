@@ -6,17 +6,17 @@
 
 #include <stdexcept>
 
-GLContext::GLContext() {
+GLContext::GLContext(const int width, const int height, const char* title, const bool visible) {
     if (!glfwInit()) {
         throw std::runtime_error("Failed to initialize GLFW.");
     }
 
-    setWindowHints();
+    setWindowHints(visible);
 
-    window_ = glfwCreateWindow(1, 1, "PrecomputerHiddenContext", nullptr, nullptr);
+    window_ = glfwCreateWindow(width, height, title, nullptr, nullptr);
     if (!window_) {
         glfwTerminate();
-        throw std::runtime_error("Failed to create hidden GLFW window.");
+        throw std::runtime_error("Failed to create GLFW window.");
     }
 
     makeCurrent();
@@ -39,9 +39,9 @@ GLContext::~GLContext() {
     glfwTerminate();
 }
 
-void GLContext::setWindowHints() {
+void GLContext::setWindowHints(const bool visible) {
     glfwDefaultWindowHints();
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_VISIBLE, visible ? GLFW_TRUE : GLFW_FALSE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -50,4 +50,16 @@ void GLContext::setWindowHints() {
 
 void GLContext::makeCurrent() const noexcept{
     glfwMakeContextCurrent(window_);
+}
+
+void GLContext::swapBuffers() const noexcept {
+    glfwSwapBuffers(window_);
+}
+
+void GLContext::pollEvents() const noexcept {
+    glfwPollEvents();
+}
+
+bool GLContext::shouldClose() const noexcept {
+    return glfwWindowShouldClose(window_) == GLFW_TRUE;
 }

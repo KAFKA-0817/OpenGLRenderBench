@@ -32,6 +32,7 @@ BrdfLutBakeResult BrdfLutBaker::bake(const std::uint32_t size) const {
     BrdfLutBakeResult result;
     result.width = size;
     result.height = size;
+    result.texture = color_texture;
     result.pixels_rg32f.resize(static_cast<std::size_t>(size) * static_cast<std::size_t>(size) * 2u, 0.0f);
 
     glReadBuffer(GL_COLOR_ATTACHMENT0);
@@ -49,7 +50,6 @@ BrdfLutBakeResult BrdfLutBaker::bake(const std::uint32_t size) const {
     glDeleteBuffers(1, &quad_buffer);
     glDeleteVertexArrays(1, &quad_vao);
     glDeleteFramebuffers(1, &framebuffer);
-    glDeleteTextures(1, &color_texture);
 
     return result;
 }

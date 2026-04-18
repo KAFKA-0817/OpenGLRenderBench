@@ -14,7 +14,15 @@
 struct BrdfLutBakeResult {
     std::uint32_t width = 0;
     std::uint32_t height = 0;
+    unsigned int texture = 0;
     std::vector<float> pixels_rg32f;
+
+    void releaseTexture() {
+        if (texture != 0) {
+            glDeleteTextures(1, &texture);
+            texture = 0;
+        }
+    }
 };
 
 class BrdfLutBaker {

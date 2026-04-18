@@ -18,13 +18,17 @@ add_executable(Precomputer
         EnvironmentBaker.hpp
         BrdfLutBaker.cpp
         BrdfLutBaker.hpp
+        PreviewPass.cpp
+        PreviewPass.hpp
         gl/GlContext.cpp
         gl/GlContext.hpp
         gl/Shader.hpp
         gl/Shader.cpp
         file_io.hpp
         shader/brdf_lut.vert
-        shader/brdf_lut.frag)
+        shader/brdf_lut.frag
+        shader/preview.vert
+        shader/preview.frag)
 
 target_link_libraries(Precomputer PRIVATE
         KTX::ktx

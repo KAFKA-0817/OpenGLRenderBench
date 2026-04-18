@@ -24,6 +24,7 @@ void KTXWriter::writeBrdfLut(const BrdfLutBakeResult& image, const std::filesyst
         throw std::runtime_error("BRDF LUT image is empty.");
     }
 
+    // The GPU texture may stay alive for direct preview; KTX writing only consumes the CPU copy.
     const std::size_t expected_pixel_count =
         static_cast<std::size_t>(image.width) * static_cast<std::size_t>(image.height) * 2u;
     if (image.pixels_rg32f.size() != expected_pixel_count) {

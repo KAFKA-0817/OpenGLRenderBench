@@ -10,7 +10,7 @@
 
 class GLContext {
 public:
-    GLContext();
+    GLContext(int width = 1, int height = 1, const char* title = "PrecomputerHiddenContext", bool visible = false);
     ~GLContext();
     GLContext(const GLContext&) = delete;
     GLContext& operator=(const GLContext&) = delete;
@@ -19,9 +19,12 @@ public:
 
     GLFWwindow* window() const noexcept { return window_; }
     void makeCurrent() const noexcept;
+    void swapBuffers() const noexcept;
+    void pollEvents() const noexcept;
+    bool shouldClose() const noexcept;
 
 private:
-    static void setWindowHints();
+    static void setWindowHints(bool visible);
 
 private:
     GLFWwindow* window_ = nullptr;
