@@ -2,11 +2,13 @@
 // Created by kaede on 2026/4/18.
 //
 #include <cstdlib>
+#include <filesystem>
 #include <iostream>
 
 #include <ktx.h>
 
 #include "BrdfLutBaker.hpp"
+#include "KtxWriter.hpp"
 
 int main() {
     const char* success_message = ktxErrorString(KTX_SUCCESS);
@@ -20,6 +22,8 @@ int main() {
         context.makeCurrent();
         BrdfLutBaker baker;
         const BrdfLutBakeResult result = baker.bake(256);
+        const std::filesystem::path output_path = std::filesystem::current_path() / "brdf_lut.ktx2";
+        KTXWriter::writeBrdfLut(result, output_path);
         const float first_r = result.pixels_rg32f.empty() ? 0.0f : result.pixels_rg32f[0];
         const float first_g = result.pixels_rg32f.size() < 2 ? 0.0f : result.pixels_rg32f[1];
 
@@ -29,6 +33,7 @@ int main() {
                   << ", pixels=" << result.pixels_rg32f.size()
                   << ", first_rg=(" << first_r << ", " << first_g << ")"
                   << std::endl;
+        std::cout << "BRDF LUT KTX2 written to: " << output_path << std::endl;
     } catch (const std::exception& exception) {
         std::cerr << "Precomputer startup failed: " << exception.what() << std::endl;
         return EXIT_FAILURE;
