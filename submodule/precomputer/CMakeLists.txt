@@ -22,7 +22,9 @@ add_executable(Precomputer
         gl/GlContext.hpp
         gl/Shader.hpp
         gl/Shader.cpp
-        file_io.hpp)
+        file_io.hpp
+        shader/brdf_lut.vert
+        shader/brdf_lut.frag)
 
 target_link_libraries(Precomputer PRIVATE
         KTX::ktx

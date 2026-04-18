@@ -20,11 +20,14 @@ int main() {
         context.makeCurrent();
         BrdfLutBaker baker;
         const BrdfLutBakeResult result = baker.bake(256);
+        const float first_r = result.pixels_rg32f.empty() ? 0.0f : result.pixels_rg32f[0];
+        const float first_g = result.pixels_rg32f.size() < 2 ? 0.0f : result.pixels_rg32f[1];
 
         std::cout << "libktx link check passed: " << success_message << std::endl;
-        std::cout << "BRDF LUT skeleton bake passed: "
+        std::cout << "BRDF LUT draw pass passed: "
                   << result.width << "x" << result.height
                   << ", pixels=" << result.pixels_rg32f.size()
+                  << ", first_rg=(" << first_r << ", " << first_g << ")"
                   << std::endl;
     } catch (const std::exception& exception) {
         std::cerr << "Precomputer startup failed: " << exception.what() << std::endl;

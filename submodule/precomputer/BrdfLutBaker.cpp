@@ -6,9 +6,16 @@
 
 #include <stdexcept>
 
+#include "gl/Shader.hpp"
+
 BrdfLutBakeResult BrdfLutBaker::bake(const std::uint32_t size) const {
     const unsigned int color_texture = createColorTexture(size);
     const unsigned int framebuffer = createFramebuffer(color_texture);
+    unsigned int quad_buffer = 0;
+    const unsigned int quad_vao = createFullscreenQuadVao(quad_buffer);
+
+    const std::filesystem::path shader_dir = shaderDirectory();
+    Shader shader(shader_dir / "brdf_lut.vert", shader_dir / "brdf_lut.frag");
 
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
     glViewport(0, 0, static_cast<GLsizei>(size), static_cast<GLsizei>(size));
@@ -17,6 +24,10 @@ BrdfLutBakeResult BrdfLutBaker::bake(const std::uint32_t size) const {
     glDisable(GL_CULL_FACE);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+    shader.use();
+    glBindVertexArray(quad_vao);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindVertexArray(0);
 
     BrdfLutBakeResult result;
     result.width = size;
@@ -35,6 +46,8 @@ BrdfLutBakeResult BrdfLutBaker::bake(const std::uint32_t size) const {
     );
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glDeleteBuffers(1, &quad_buffer);
+    glDeleteVertexArrays(1, &quad_vao);
     glDeleteFramebuffers(1, &framebuffer);
     glDeleteTextures(1, &color_texture);
 
@@ -77,4 +90,33 @@ unsigned int BrdfLutBaker::createFramebuffer(const unsigned int color_texture) {
     }
 
     return framebuffer;
+}
+
+unsigned int BrdfLutBaker::createFullscreenQuadVao(unsigned int& vertex_buffer) {
+    constexpr float kQuadVertices[] = {
+        -1.0f, -1.0f, 0.0f, 0.0f,
+         1.0f, -1.0f, 1.0f, 0.0f,
+        -1.0f,  1.0f, 0.0f, 1.0f,
+         1.0f,  1.0f, 1.0f, 1.0f,
+    };
+
+    unsigned int vao = 0;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+
+    glGenBuffers(1, &vertex_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(kQuadVertices), kQuadVertices, GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), reinterpret_cast<void*>(0));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), reinterpret_cast<void*>(2 * sizeof(float)));
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+    return vao;
+}
+
+std::filesystem::path BrdfLutBaker::shaderDirectory() {
+    return std::filesystem::path(__FILE__).parent_path() / "shader";
 }

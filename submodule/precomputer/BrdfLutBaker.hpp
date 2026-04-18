@@ -6,6 +6,7 @@
 #define PRECOMPUTER_BRDFLUTBAKER_HPP
 
 #include <cstdint>
+#include <filesystem>
 #include <vector>
 
 #include "gl/GlContext.hpp"
@@ -24,6 +25,8 @@ public:
 private:
     static unsigned int createColorTexture(std::uint32_t size);
     static unsigned int createFramebuffer(unsigned int color_texture);
+    static unsigned int createFullscreenQuadVao(unsigned int& vertex_buffer);
+    static std::filesystem::path shaderDirectory();
 };
 
 
