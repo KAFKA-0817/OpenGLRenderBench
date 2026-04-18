@@ -21,7 +21,7 @@ int main() {
         GLContext context;
         context.makeCurrent();
         BrdfLutBaker baker;
-        const BrdfLutBakeResult result = baker.bake(256);
+        const BrdfLutBakeResult result = baker.bake(512);
         const std::filesystem::path output_path = std::filesystem::current_path() / "brdf_lut.ktx2";
         KTXWriter::writeBrdfLut(result, output_path);
         const float first_r = result.pixels_rg32f.empty() ? 0.0f : result.pixels_rg32f[0];
