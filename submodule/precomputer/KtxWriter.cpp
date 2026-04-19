@@ -6,11 +6,13 @@
 
 #include <string>
 #include <stdexcept>
+#include <cstring>
 
 #include <ktx.h>
 
 namespace {
     constexpr ktx_uint32_t kVkFormatR32G32Sfloat = 103u;
+    constexpr ktx_uint32_t kVkFormatR32G32B32A32Sfloat = 109u;
 
     void checkKtxResult(const KTX_error_code result, const char* operation) {
         if (result != KTX_SUCCESS) {
@@ -69,6 +71,82 @@ void KTXWriter::writeBrdfLut(const BrdfLutBakeResult& image, const std::filesyst
             ),
             "ktxTexture_SetImageFromMemory"
         );
+
+        checkKtxResult(
+            ktxTexture_WriteToNamedFile(base_texture, output_path.string().c_str()),
+            "ktxTexture_WriteToNamedFile"
+        );
+    } catch (...) {
+        ktxTexture_Destroy(base_texture);
+        throw;
+    }
+
+    ktxTexture_Destroy(base_texture);
+}
+
+void KTXWriter::writeEnvironmentCubemap(const EnvironmentCubemapBakeResult& image, const std::filesystem::path& output_path) {
+    if (image.face_size == 0) {
+        throw std::runtime_error("Environment cubemap image is empty.");
+    }
+
+    const std::size_t expected_pixel_count =
+        static_cast<std::size_t>(image.face_size) *
+        static_cast<std::size_t>(image.face_size) *
+        6u * 4u;
+    if (image.pixels_rgba32f.size() != expected_pixel_count) {
+        throw std::runtime_error("Environment cubemap pixel buffer size does not match face_size * face_size * 6 * 4.");
+    }
+
+    if (output_path.has_parent_path()) {
+        std::filesystem::create_directories(output_path.parent_path());
+    }
+
+    const ktxTextureCreateInfo create_info = {
+        0,
+        kVkFormatR32G32B32A32Sfloat,
+        nullptr,
+        image.face_size,
+        image.face_size,
+        1,
+        2,
+        1,
+        1,
+        6,
+        KTX_FALSE,
+        KTX_FALSE
+    };
+
+    ktxTexture2* texture = nullptr;
+    checkKtxResult(
+        ktxTexture2_Create(&create_info, KTX_TEXTURE_CREATE_ALLOC_STORAGE, &texture),
+        "ktxTexture2_Create"
+    );
+    ktxTexture* base_texture = reinterpret_cast<ktxTexture*>(texture);
+
+    const std::size_t face_pixel_count =
+        static_cast<std::size_t>(image.face_size) *
+        static_cast<std::size_t>(image.face_size) * 4u;
+    const ktx_size_t face_byte_size = static_cast<ktx_size_t>(face_pixel_count * sizeof(float));
+
+    try {
+        ktx_uint8_t* texture_data = ktxTexture_GetData(base_texture);
+        if (texture_data == nullptr) {
+            throw std::runtime_error("ktxTexture_GetData returned null.");
+        }
+
+        for (ktx_uint32_t face = 0; face < 6; ++face) {
+            const float* face_pixels = image.pixels_rgba32f.data() + face * face_pixel_count;
+            ktx_size_t offset = 0;
+            checkKtxResult(
+                ktxTexture_GetImageOffset(base_texture, 0, 0, face, &offset),
+                "ktxTexture_GetImageOffset"
+            );
+            std::memcpy(
+                texture_data + offset,
+                reinterpret_cast<const ktx_uint8_t*>(face_pixels),
+                static_cast<std::size_t>(face_byte_size)
+            );
+        }
 
         checkKtxResult(
             ktxTexture_WriteToNamedFile(base_texture, output_path.string().c_str()),

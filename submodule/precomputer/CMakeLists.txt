@@ -9,6 +9,7 @@ find_package(glfw3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 
 add_subdirectory("external/glad")
+add_subdirectory("external/stb_image")
 
 add_executable(Precomputer
         main.cpp
@@ -25,14 +26,12 @@ add_executable(Precomputer
         gl/Shader.hpp
         gl/Shader.cpp
         file_io.hpp
-        shader/brdf_lut.vert
-        shader/brdf_lut.frag
-        shader/preview.vert
-        shader/preview.frag)
+)
 
 target_link_libraries(Precomputer PRIVATE
         KTX::ktx
         glfw
         glad
         glm::glm
+        stb_image
 )
