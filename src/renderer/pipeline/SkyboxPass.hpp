@@ -18,7 +18,8 @@ namespace renderer {
 
         void execute(const TextureCube& environment_map,
                      const Camera& camera,
-                     const FrameBuffer& target_framebuffer);
+                     const FrameBuffer& target_framebuffer,
+                     float lod = 0.0f);
 
         bool reloadShader();
 

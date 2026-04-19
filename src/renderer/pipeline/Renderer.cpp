@@ -4,6 +4,7 @@
 
 #include "Renderer.hpp"
 
+#include <algorithm>
 #include <unordered_set>
 
 #include "../../core/Log.hpp"
@@ -108,6 +109,32 @@ namespace renderer {
         }
     }
 
+    const TextureCube& Renderer::currentSkyboxTexture() const noexcept {
+        switch (skybox_source_) {
+            case SkyboxSource::Environment:
+                return ibl_resources_.environment_map;
+            case SkyboxSource::Irradiance:
+                return ibl_resources_.irradiance_map;
+            case SkyboxSource::Prefilter:
+                return ibl_resources_.prefilter_map;
+            default:
+                return ibl_resources_.environment_map;
+        }
+    }
+
+    void Renderer::setSkyboxSource(const SkyboxSource source) noexcept {
+        skybox_source_ = source;
+        setSkyboxLod(skybox_lod_);
+    }
+
+    void Renderer::setSkyboxLod(const float lod) noexcept {
+        skybox_lod_ = std::clamp(lod, 0.0f, skyboxMaxLod());
+    }
+
+    float Renderer::skyboxMaxLod() const noexcept {
+        return std::max(0, currentSkyboxTexture().mipCount() - 1);
+    }
+
     void Renderer::renderFrame(const Camera& camera, const RenderContext& render_context) {
         anyEntitySelected_ = false;
         selectedItems_.clear();
@@ -179,7 +206,7 @@ namespace renderer {
                               lighting_pass_.framebuffer(),
                               z_pre_enabled_ && !z_pre_items.empty());
 
-        skybox_pass_.execute(ibl_resources_.environment_map, camera, lighting_pass_.framebuffer());
+        skybox_pass_.execute(currentSkyboxTexture(), camera, lighting_pass_.framebuffer(), skybox_lod_);
 
         forward_pass_.executeTransparentPbr(transparent_items_,
                                             camera,
@@ -279,6 +306,29 @@ namespace renderer {
             return true;
         } catch (const std::exception& e) {
             core::Log::getInstance().write("Renderer", std::string("Failed to load environment map: ") + e.what());
+            return false;
+        }
+    }
+
+    bool Renderer::loadIrradianceMap(const std::filesystem::path& path) {
+        try {
+            ibl_resources_.irradiance_map = TextureCube::createFromKtx2(path);
+            core::Log::getInstance().write("Renderer", "Loaded irradiance map: " + path.string());
+            return true;
+        } catch (const std::exception& e) {
+            core::Log::getInstance().write("Renderer", std::string("Failed to load irradiance map: ") + e.what());
+            return false;
+        }
+    }
+
+    bool Renderer::loadPrefilterMap(const std::filesystem::path& path) {
+        try {
+            ibl_resources_.prefilter_map = TextureCube::createFromKtx2(path);
+            setSkyboxLod(skybox_lod_);
+            core::Log::getInstance().write("Renderer", "Loaded prefilter map: " + path.string());
+            return true;
+        } catch (const std::exception& e) {
+            core::Log::getInstance().write("Renderer", std::string("Failed to load prefilter map: ") + e.what());
             return false;
         }
     }

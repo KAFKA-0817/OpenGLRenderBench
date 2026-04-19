@@ -30,7 +30,7 @@ int main() {
         const std::filesystem::path prefilter_output_path = hdr_path.parent_path() / "SunnySky_prefilter.ktx2";
 
         EnvironmentBaker baker;
-        const EnvironmentBakeResult result = baker.bakeFromHdr(hdr_path, 512, 32, 128, 5);
+        const EnvironmentBakeResult result = baker.bakeFromHdr(hdr_path, 512, 32, 512, 10);
         KTXWriter::writeEnvironmentCubemap(result.environment, environment_output_path);
         KTXWriter::writeEnvironmentCubemap(result.irradiance, irradiance_output_path);
         KTXWriter::writePrefilterCubemap(result.prefilter, prefilter_output_path);

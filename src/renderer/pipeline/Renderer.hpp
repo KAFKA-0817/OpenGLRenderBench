@@ -38,6 +38,12 @@ namespace renderer {
         BrdfLut = 9,
     };
 
+    enum class SkyboxSource {
+        Environment = 0,
+        Irradiance = 1,
+        Prefilter = 2,
+    };
+
     enum class ShaderType {
         Bloom,
         Forward,
@@ -71,6 +77,11 @@ namespace renderer {
         bool bloomEnabled() const noexcept { return bloom_enabled_; }
         void setZPreEnabled(bool enabled) noexcept { z_pre_enabled_ = enabled; }
         bool zPreEnabled() const noexcept { return z_pre_enabled_; }
+        void setSkyboxSource(SkyboxSource source) noexcept;
+        SkyboxSource skyboxSource() const noexcept { return skybox_source_; }
+        void setSkyboxLod(float lod) noexcept;
+        float skyboxLod() const noexcept { return skybox_lod_; }
+        float skyboxMaxLod() const noexcept;
 
         void submit(editor::Entity id,
                 const Mesh& mesh,
@@ -82,15 +93,20 @@ namespace renderer {
         void reloadShaders(const std::vector<std::filesystem::path>&);
         bool loadBrdfLut(const std::filesystem::path& path);
         bool loadEnvironmentMap(const std::filesystem::path& path);
+        bool loadIrradianceMap(const std::filesystem::path& path);
+        bool loadPrefilterMap(const std::filesystem::path& path);
         GLuint outputTexture() const noexcept { return currentPreviewTexture(); }
 
     private:
         struct IblResources {
             Texture2D brdf_lut;
             TextureCube environment_map;
+            TextureCube irradiance_map;
+            TextureCube prefilter_map;
         };
 
         GLuint currentPreviewTexture() const noexcept;
+        const TextureCube& currentSkyboxTexture() const noexcept;
         bool isEntitySelected(const RenderContext& render_context, std::vector<RenderItem>& selectedItems) const;
 
     private:
@@ -116,7 +132,9 @@ namespace renderer {
         bool ssao_enabled_ = true;
         bool bloom_enabled_ = true;
         bool z_pre_enabled_ = false;
+        SkyboxSource skybox_source_ = SkyboxSource::Environment;
         PreviewMode preview_mode_ = PreviewMode::FinalScene;
+        float skybox_lod_ = 0.0f;
         float clear_r_ = 0.1f;
         float clear_g_ = 0.1f;
         float clear_b_ = 0.1f;

@@ -4,6 +4,7 @@
 
 #include "TextureCube.hpp"
 
+#include <algorithm>
 #include <stdexcept>
 #include <string>
 
@@ -23,15 +24,18 @@ namespace renderer {
     }
 
     TextureCube::TextureCube(TextureCube&& other) noexcept
-        : id_(other.id_) {
+        : id_(other.id_), mip_count_(other.mip_count_) {
         other.id_ = 0;
+        other.mip_count_ = 0;
     }
 
     TextureCube& TextureCube::operator=(TextureCube&& other) noexcept {
         if (this != &other) {
             destroy();
             id_ = other.id_;
+            mip_count_ = other.mip_count_;
             other.id_ = 0;
+            other.mip_count_ = 0;
         }
         return *this;
     }
@@ -41,6 +45,7 @@ namespace renderer {
             glDeleteTextures(1, &id_);
             id_ = 0;
         }
+        mip_count_ = 0;
     }
 
     void TextureCube::bind(const GLuint unit) const {
@@ -69,6 +74,7 @@ namespace renderer {
         GLuint texture_id = 0;
         GLenum target = GL_NONE;
         GLenum gl_error = GL_NO_ERROR;
+        const int mip_count = static_cast<int>(std::max(1u, ktx_texture->numLevels));
 
         try {
             checkKtxResult(
@@ -83,7 +89,10 @@ namespace renderer {
             }
 
             glBindTexture(GL_TEXTURE_CUBE_MAP, texture_id);
-            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, 0);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, mip_count - 1);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER,
+                            mip_count > 1 ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -95,6 +104,6 @@ namespace renderer {
         }
 
         ktxTexture_Destroy(ktx_texture);
-        return TextureCube(texture_id);
+        return TextureCube(texture_id, mip_count);
     }
 }

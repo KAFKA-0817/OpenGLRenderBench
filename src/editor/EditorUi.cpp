@@ -132,6 +132,49 @@ namespace editor {
             }
         }
 
+        const char* skyboxSourceLabel(const renderer::SkyboxSource source) {
+            switch (source) {
+                case renderer::SkyboxSource::Environment:
+                    return "Environment";
+                case renderer::SkyboxSource::Irradiance:
+                    return "Irradiance";
+                case renderer::SkyboxSource::Prefilter:
+                    return "Prefilter";
+                default:
+                    return "Environment";
+            }
+        }
+
+        void drawSkyboxControls(renderer::Renderer& renderer) {
+            const auto current_source = renderer.skyboxSource();
+            if (ImGui::BeginCombo("Skybox", skyboxSourceLabel(current_source))) {
+                constexpr std::array sources = {
+                    renderer::SkyboxSource::Environment,
+                    renderer::SkyboxSource::Irradiance,
+                    renderer::SkyboxSource::Prefilter,
+                };
+
+                for (const auto source : sources) {
+                    const bool selected = (source == current_source);
+                    if (ImGui::Selectable(skyboxSourceLabel(source), selected)) {
+                        renderer.setSkyboxSource(source);
+                    }
+                    if (selected) {
+                        ImGui::SetItemDefaultFocus();
+                    }
+                }
+                ImGui::EndCombo();
+            }
+
+            if (renderer.skyboxSource() == renderer::SkyboxSource::Prefilter) {
+                float lod = renderer.skyboxLod();
+                const float max_lod = renderer.skyboxMaxLod();
+                if (ImGui::SliderFloat("Prefilter LOD", &lod, 0.0f, max_lod, "%.2f")) {
+                    renderer.setSkyboxLod(lod);
+                }
+            }
+        }
+
         float sanitizeUniformScale(const float scale) {
             return std::max(scale, 0.001f);
         }
@@ -524,6 +567,7 @@ namespace editor {
             renderer_.setZPreEnabled(z_pre_enabled);
         }
 
+        drawSkyboxControls(renderer_);
         drawPreviewModeCombo(renderer_);
 
         ImGui::End();

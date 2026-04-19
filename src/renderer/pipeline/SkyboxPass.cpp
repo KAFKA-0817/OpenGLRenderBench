@@ -20,7 +20,8 @@ namespace renderer {
 
     void SkyboxPass::execute(const TextureCube& environment_map,
                              const Camera& camera,
-                             const FrameBuffer& target_framebuffer) {
+                             const FrameBuffer& target_framebuffer,
+                             const float lod) {
         if (environment_map.id() == 0) {
             return;
         }
@@ -40,6 +41,7 @@ namespace renderer {
         shader_.setMat4("u_Projection", camera.getProjectionMatrix());
         environment_map.bind(0);
         shader_.setInt("u_EnvironmentMap", 0);
+        shader_.setFloat("u_Lod", lod);
         cube_.draw();
 
         glDepthMask(GL_TRUE);
