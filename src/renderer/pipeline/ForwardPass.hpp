@@ -10,6 +10,8 @@
 #include "RenderPass.hpp"
 #include "../core/FrameBuffer.hpp"
 #include "../core/Shader.hpp"
+#include "../asset/Texture2D.hpp"
+#include "../asset/TextureCube.hpp"
 #include "../../app/frame/RenderContextFrame.hpp"
 #include "../camera/Camera.hpp"
 
@@ -29,7 +31,10 @@ namespace renderer {
         void executeTransparentPbr(const std::vector<RenderItem>& transparent_items,
                                    const Camera& camera,
                                    const RenderContext& render_context,
-                                   const FrameBuffer& target_framebuffer);
+                                   const FrameBuffer& target_framebuffer,
+                                   const TextureCube& irradiance_map,
+                                   const TextureCube& prefilter_map,
+                                   const Texture2D& brdf_lut);
 
         bool reloadShader();
 

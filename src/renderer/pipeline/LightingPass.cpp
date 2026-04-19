@@ -4,6 +4,7 @@
 
 #include "LightingPass.hpp"
 
+#include <algorithm>
 #include <string>
 
 #include "../../core/Log.hpp"
@@ -32,7 +33,10 @@ namespace renderer {
                            GLuint ssao_map,
                            GLuint shadow_map,
                            const glm::mat4& lightSpaceMatrix,
-                           const RenderContext& context) {
+                           const RenderContext& context,
+                           const TextureCube& irradiance_map,
+                           const TextureCube& prefilter_map,
+                           const Texture2D& brdf_lut) {
         glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 2, -1, "Lighting Pass");
 
         framebuffer_.bind();
@@ -90,6 +94,16 @@ namespace renderer {
         glActiveTexture(GL_TEXTURE6);
         glBindTexture(GL_TEXTURE_2D, shadow_map);
         shader_.setInt("u_ShadowMap", 6);
+
+        irradiance_map.bind(7);
+        shader_.setInt("u_IrradianceMap", 7);
+
+        prefilter_map.bind(8);
+        shader_.setInt("u_PrefilterMap", 8);
+        shader_.setFloat("u_PrefilterMaxLod", static_cast<float>(std::max(0, prefilter_map.mipCount() - 1)));
+
+        brdf_lut.bind(9);
+        shader_.setInt("u_BrdfLut", 9);
 
         screen_quad_.draw();
 

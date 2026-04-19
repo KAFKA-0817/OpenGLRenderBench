@@ -26,6 +26,9 @@ uniform sampler2D u_GMaterial;
 uniform sampler2D u_GEmissive;
 uniform sampler2D u_SSAOMap;
 uniform sampler2D u_ShadowMap;
+uniform samplerCube u_IrradianceMap;
+uniform samplerCube u_PrefilterMap;
+uniform sampler2D u_BrdfLut;
 
 uniform int u_HasDirectionalLight;
 uniform DirectionalLight u_DirectionalLight;
@@ -33,6 +36,7 @@ uniform int u_PointLightCount;
 uniform PointLight u_PointLights[MAX_POINT_LIGHTS];
 uniform vec3 u_ViewPos;
 uniform mat4 u_lightSpaceMatrix;
+uniform float u_PrefilterMaxLod;
 
 float DistributionGGX(vec3 N, vec3 H, float roughness) {
     float a = roughness * roughness;
@@ -65,6 +69,10 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0) {
     return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
+vec3 FresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness) {
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}
+
 vec3 EvaluatePbrDirect(vec3 N,
                        vec3 V,
                        vec3 L,
@@ -91,6 +99,30 @@ vec3 EvaluatePbrDirect(vec3 N,
 
     float NdotL = max(dot(N, L), 0.0);
     return (kD * albedo / PI + specular) * radiance * NdotL;
+}
+
+vec3 EvaluatePbrIbl(vec3 N,
+                    vec3 V,
+                    vec3 albedo,
+                    float metallic,
+                    float roughness,
+                    float ao) {
+    float NdotV = max(dot(N, V), 0.0);
+    vec3 F0 = mix(vec3(0.04), albedo, metallic);
+    vec3 F = FresnelSchlickRoughness(NdotV, F0, roughness);
+
+    vec3 kS = F;
+    vec3 kD = (vec3(1.0) - kS) * (1.0 - metallic);
+
+    vec3 irradiance = texture(u_IrradianceMap, N).rgb;
+    vec3 diffuse = irradiance * albedo;
+
+    vec3 R = reflect(-V, N);
+    vec3 prefilteredColor = textureLod(u_PrefilterMap, R, roughness * u_PrefilterMaxLod).rgb;
+    vec2 brdf = texture(u_BrdfLut, vec2(NdotV, roughness)).rg;
+    vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
+
+    return (kD * diffuse + specular) * ao;
 }
 
 float ComputePointAttenuation(PointLight light, float distanceToLight) {
@@ -158,12 +190,7 @@ void main() {
         directLighting += EvaluatePbrDirect(N, V, L, radiance, albedo, metallic, roughness);
     }
 
-    float hemi = N.y * 0.5 + 0.5;
-    vec3 skyColor = vec3(0.10, 0.12, 0.16);
-    vec3 groundColor = vec3(0.13, 0.13, 0.13);
-    vec3 hemiLight = mix(groundColor, skyColor, hemi);
-    float abient_intensity = 1.0;
-    vec3 ambient = abient_intensity * hemiLight * albedo * ao;
+    vec3 ambient = EvaluatePbrIbl(N, V, albedo, metallic, roughness, ao);
 
     vec3 radiance = ambient + directLighting + emissive*10.0;
     FragColor = vec4(radiance, 1.0);

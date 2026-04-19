@@ -193,7 +193,10 @@ namespace renderer {
             ssao_texture,
             shadow_pass_.colorAttachment(),
             shadow_pass_.getLightSpaceMatrix(),
-            render_context
+            render_context,
+            ibl_resources_.irradiance_map,
+            ibl_resources_.prefilter_map,
+            ibl_resources_.brdf_lut
         );
 
         FrameBuffer::blitDepth(gbuffer_pass_.framebuffer(), lighting_pass_.framebuffer());
@@ -211,7 +214,10 @@ namespace renderer {
         forward_pass_.executeTransparentPbr(transparent_items_,
                                             camera,
                                             render_context,
-                                            lighting_pass_.framebuffer());
+                                            lighting_pass_.framebuffer(),
+                                            ibl_resources_.irradiance_map,
+                                            ibl_resources_.prefilter_map,
+                                            ibl_resources_.brdf_lut);
 
         GLuint scene_hdr_texture = lighting_pass_.colorAttachment();
         if (bloom_enabled_) {

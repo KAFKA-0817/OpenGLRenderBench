@@ -8,6 +8,8 @@
 #include "../core/FrameBuffer.hpp"
 #include "../core/Shader.hpp"
 #include "../asset/Model.hpp"
+#include "../asset/Texture2D.hpp"
+#include "../asset/TextureCube.hpp"
 #include "../../app/frame/RenderContextFrame.hpp"
 
 namespace renderer {
@@ -26,7 +28,10 @@ namespace renderer {
                      GLuint ssao_map,
                      GLuint shadow_map,
                      const glm::mat4& lightSpaceMatrix,
-                     const RenderContext& context);
+                     const RenderContext& context,
+                     const TextureCube& irradiance_map,
+                     const TextureCube& prefilter_map,
+                     const Texture2D& brdf_lut);
 
         const FrameBuffer& framebuffer() const noexcept { return framebuffer_; }
         GLuint colorAttachment() const noexcept { return framebuffer_.colorAttachment(0); }

@@ -40,7 +40,10 @@ namespace renderer {
                                         const PBRMaterial& material,
                                         const glm::mat4& model,
                                         const Camera& camera,
-                                        const RenderContext& context) {
+                                        const RenderContext& context,
+                                        const TextureCube& irradiance_map,
+                                        const TextureCube& prefilter_map,
+                                        const Texture2D& brdf_lut) {
             shader.use();
 
             shader.setMat4("u_Model", model);
@@ -84,6 +87,16 @@ namespace renderer {
                 material.emissiveMap()->bind(4);
                 shader.setInt("u_EmissiveMap", 4);
             }
+
+            irradiance_map.bind(5);
+            shader.setInt("u_IrradianceMap", 5);
+
+            prefilter_map.bind(6);
+            shader.setInt("u_PrefilterMap", 6);
+            shader.setFloat("u_PrefilterMaxLod", static_cast<float>(std::max(0, prefilter_map.mipCount() - 1)));
+
+            brdf_lut.bind(7);
+            shader.setInt("u_BrdfLut", 7);
         }
     }
 
@@ -135,7 +148,10 @@ namespace renderer {
     void ForwardPass::executeTransparentPbr(const std::vector<RenderItem>& transparent_items,
                                             const Camera& camera,
                                             const RenderContext& render_context,
-                                            const FrameBuffer& target_framebuffer) {
+                                            const FrameBuffer& target_framebuffer,
+                                            const TextureCube& irradiance_map,
+                                            const TextureCube& prefilter_map,
+                                            const Texture2D& brdf_lut) {
         glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 4, -1, "Transparent Forward PBR Pass");
 
         target_framebuffer.bind();
@@ -174,7 +190,10 @@ namespace renderer {
                                        *material,
                                        item->model_matrix,
                                        camera,
-                                       render_context);
+                                       render_context,
+                                       irradiance_map,
+                                       prefilter_map,
+                                       brdf_lut);
 
             if (material->doubleSided()) {
                 glDisable(GL_CULL_FACE);
