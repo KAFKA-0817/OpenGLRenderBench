@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <ktx.h>
 
 namespace {
 
@@ -98,6 +99,17 @@ namespace core {
     void OpenGLContext::loadGlad() {
         if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
             throw std::runtime_error("Failed to initialize GLAD.");
+        }
+    }
+
+    void OpenGLContext::loadKtxOpenGL() {
+        const KTX_error_code result = ktxLoadOpenGL(
+            reinterpret_cast<PFNGLGETPROCADDRESS>(glfwGetProcAddress)
+        );
+        if (result != KTX_SUCCESS) {
+            throw std::runtime_error(
+                std::string("Failed to initialize libktx OpenGL bindings: ") + ktxErrorString(result)
+            );
         }
     }
 

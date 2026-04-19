@@ -20,6 +20,7 @@ namespace core {
         OpenGLContext& operator=(OpenGLContext&&) = delete;
 
         static void loadGlad();
+        static void loadKtxOpenGL();
         static void setDefaultWindowHints();
         static void enableDebugOutput();
     };

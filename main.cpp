@@ -44,6 +44,7 @@ int main(int argc, char** argv)
     Window window(width,height,"PBR Renderer");
     window.make_context_current();
     core::OpenGLContext::loadGlad();
+    core::OpenGLContext::loadKtxOpenGL();
     core::OpenGLContext::enableDebugOutput();
     glViewport(0,0,window.width(),window.height());
 
@@ -112,6 +113,7 @@ int main(int argc, char** argv)
     scene.addMeshRenderer(debug_cube,{&debug_cube_model,true});
 
     Renderer renderer(900,600);
+    renderer.loadBrdfLut(core::ProjectPaths::assets() / "brdf_lut.ktx2");
     app::EditorCommandsFrame editor_commands_frame;
     RenderContextFrame render_context_frame;
     PerspectiveCamera camera;

@@ -4,6 +4,8 @@
 
 #ifndef PBRRENDERER_TEXTURE2D_HPP
 #define PBRRENDERER_TEXTURE2D_HPP
+#include <filesystem>
+
 #include "../../core/opengl.hpp"
 #include "../../core/noncopyable.hpp"
 
@@ -30,6 +32,8 @@ namespace renderer {
                                           int height,
                                           int channels,
                                           bool srgb);
+
+        static Texture2D createFromKtx2(const std::filesystem::path& path);
 
         static Texture2D createFromChannel(const unsigned char* pixels,
                                            int width,

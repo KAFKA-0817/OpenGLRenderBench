@@ -71,6 +71,9 @@ namespace editor {
             if (ImGui::MenuItem("Shadow",nullptr,current_mode == renderer::PreviewMode::Shadow)) {
                 renderer.setPreviewMode(renderer::PreviewMode::Shadow);
             }
+            if (ImGui::MenuItem("BRDF LUT", nullptr, current_mode == renderer::PreviewMode::BrdfLut)) {
+                renderer.setPreviewMode(renderer::PreviewMode::BrdfLut);
+            }
         }
 
         const char* previewModeLabel(const renderer::PreviewMode mode) {
@@ -93,6 +96,8 @@ namespace editor {
                     return "Mask";
                 case renderer::PreviewMode::Shadow:
                     return "Shadow";
+                case renderer::PreviewMode::BrdfLut:
+                    return "BRDF LUT";
                 default:
                     return "Final Scene";
             }
@@ -111,6 +116,7 @@ namespace editor {
                     renderer::PreviewMode::SSAO,
                     renderer::PreviewMode::Mask,
                     renderer::PreviewMode::Shadow,
+                    renderer::PreviewMode::BrdfLut,
                 };
 
                 for (const auto mode : modes) {

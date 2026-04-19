@@ -4,6 +4,8 @@
 
 #ifndef PBRRENDERER_RENDER_HPP
 #define PBRRENDERER_RENDER_HPP
+#include <filesystem>
+
 #include "BloomPass.hpp"
 #include "ForwardPass.hpp"
 #include "GBufferPass.hpp"
@@ -31,6 +33,7 @@ namespace renderer {
         SSAO = 6,
         Mask = 7,
         Shadow = 8,
+        BrdfLut = 9,
     };
 
     enum class ShaderType {
@@ -74,9 +77,14 @@ namespace renderer {
         void renderFrame(const Camera& camera, const RenderContext& render_context);
         void reloadBuiltinShaders();
         void reloadShaders(const std::vector<std::filesystem::path>&);
+        bool loadBrdfLut(const std::filesystem::path& path);
         GLuint outputTexture() const noexcept { return currentPreviewTexture(); }
 
     private:
+        struct IblResources {
+            Texture2D brdf_lut;
+        };
+
         GLuint currentPreviewTexture() const noexcept;
         bool isEntitySelected(const RenderContext& render_context, std::vector<RenderItem>& selectedItems) const;
 
@@ -97,6 +105,7 @@ namespace renderer {
         std::vector<RenderItem> deferred_items_;
         std::vector<RenderItem> forward_items_;
         std::vector<RenderItem> transparent_items_;
+        IblResources ibl_resources_;
         Texture2D white_texture_ = Texture2D::createWhite1x1();
         bool ssao_enabled_ = true;
         bool bloom_enabled_ = true;

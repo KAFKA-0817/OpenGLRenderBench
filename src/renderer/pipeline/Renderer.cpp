@@ -101,6 +101,8 @@ namespace renderer {
                 return mask_pass_.colorAttachment();
             case PreviewMode::Shadow:
                 return shadow_pass_.colorAttachment();
+            case PreviewMode::BrdfLut:
+                return ibl_resources_.brdf_lut.id();
             default:
                 return present_pass_.colorAttachment();
         }
@@ -261,6 +263,17 @@ namespace renderer {
                     z_pre_pass_.reloadShader();
                     break;
             }
+        }
+    }
+
+    bool Renderer::loadBrdfLut(const std::filesystem::path& path) {
+        try {
+            ibl_resources_.brdf_lut = Texture2D::createFromKtx2(path);
+            core::Log::getInstance().write("Renderer", "Loaded BRDF LUT: " + path.string());
+            return true;
+        } catch (const std::exception& e) {
+            core::Log::getInstance().write("Renderer", std::string("Failed to load BRDF LUT: ") + e.what());
+            return false;
         }
     }
 
