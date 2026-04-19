@@ -161,7 +161,7 @@ unsigned int EnvironmentBaker::loadHdrTexture(const std::filesystem::path& hdr_p
         throw std::runtime_error("Input image is not HDR: " + hdr_path.string());
     }
 
-    stbi_set_flip_vertically_on_load(0);
+    stbi_set_flip_vertically_on_load(1);
 
     int width = 0;
     int height = 0;

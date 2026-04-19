@@ -15,11 +15,13 @@
 #include "../../core/opengl.hpp"
 #include "../../core/noncopyable.hpp"
 #include "../asset/Texture2D.hpp"
+#include "../asset/TextureCube.hpp"
 #include "LightingPass.hpp"
 #include "MaskPass.hpp"
 #include "OutlinePass.hpp"
 #include "SSAOPass.hpp"
 #include "ShadowPass.hpp"
+#include "SkyboxPass.hpp"
 
 namespace renderer {
 
@@ -45,6 +47,7 @@ namespace renderer {
         Outline,
         Present,
         Shadow,
+        Skybox,
         SSAO,
         ZPre
     };
@@ -78,11 +81,13 @@ namespace renderer {
         void reloadBuiltinShaders();
         void reloadShaders(const std::vector<std::filesystem::path>&);
         bool loadBrdfLut(const std::filesystem::path& path);
+        bool loadEnvironmentMap(const std::filesystem::path& path);
         GLuint outputTexture() const noexcept { return currentPreviewTexture(); }
 
     private:
         struct IblResources {
             Texture2D brdf_lut;
+            TextureCube environment_map;
         };
 
         GLuint currentPreviewTexture() const noexcept;
@@ -99,6 +104,7 @@ namespace renderer {
         MaskPass mask_pass_;
         OutlinePass outline_pass_;
         ShadowPass shadow_pass_;
+        SkyboxPass skybox_pass_;
 
         bool anyEntitySelected_ = false;
         std::vector<RenderItem> selectedItems_;
@@ -128,6 +134,7 @@ namespace renderer {
             {"outline",ShaderType::Outline},
             {"screen",ShaderType::Present},
             {"shadow_pass",ShaderType::Shadow},
+            {"skybox",ShaderType::Skybox},
             {"ssao",ShaderType::SSAO},
             {"ssao_blur",ShaderType::SSAO},
             {"z_pre",ShaderType::ZPre}

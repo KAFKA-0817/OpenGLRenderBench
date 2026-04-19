@@ -54,6 +54,8 @@ add_executable(OpenGLRenderBench main.cpp
         src/renderer/material/PbrMaterial.hpp
         src/renderer/asset/Texture2D.cpp
         src/renderer/asset/Texture2D.hpp
+        src/renderer/asset/TextureCube.cpp
+        src/renderer/asset/TextureCube.hpp
         src/renderer/pipeline/RenderPass.hpp
         src/renderer/pipeline/PresentPass.cpp
         src/renderer/pipeline/PresentPass.hpp
@@ -107,6 +109,8 @@ add_executable(OpenGLRenderBench main.cpp
         src/renderer/pipeline/OutlinePass.hpp
         src/renderer/pipeline/ShadowPass.cpp
         src/renderer/pipeline/ShadowPass.hpp
+        src/renderer/pipeline/SkyboxPass.cpp
+        src/renderer/pipeline/SkyboxPass.hpp
 )
 
 target_link_libraries(OpenGLRenderBench PRIVATE

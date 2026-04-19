@@ -179,6 +179,8 @@ namespace renderer {
                               lighting_pass_.framebuffer(),
                               z_pre_enabled_ && !z_pre_items.empty());
 
+        skybox_pass_.execute(ibl_resources_.environment_map, camera, lighting_pass_.framebuffer());
+
         forward_pass_.executeTransparentPbr(transparent_items_,
                                             camera,
                                             render_context,
@@ -209,6 +211,7 @@ namespace renderer {
         mask_pass_.reloadShader();
         outline_pass_.reloadShader();
         shadow_pass_.reloadShader();
+        skybox_pass_.reloadShader();
     }
 
     void Renderer::reloadShaders(const std::vector<std::filesystem::path>& dirty_files) {
@@ -256,6 +259,9 @@ namespace renderer {
                 case ShaderType::Shadow:
                     shadow_pass_.reloadShader();
                     break;
+                case ShaderType::Skybox:
+                    skybox_pass_.reloadShader();
+                    break;
                 case ShaderType::SSAO:
                     ssao_pass_.reloadShader();
                     break;
@@ -263,6 +269,17 @@ namespace renderer {
                     z_pre_pass_.reloadShader();
                     break;
             }
+        }
+    }
+
+    bool Renderer::loadEnvironmentMap(const std::filesystem::path& path) {
+        try {
+            ibl_resources_.environment_map = TextureCube::createFromKtx2(path);
+            core::Log::getInstance().write("Renderer", "Loaded environment map: " + path.string());
+            return true;
+        } catch (const std::exception& e) {
+            core::Log::getInstance().write("Renderer", std::string("Failed to load environment map: ") + e.what());
+            return false;
         }
     }
 

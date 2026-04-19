@@ -28,7 +28,7 @@ int main() {
         const std::filesystem::path output_path = hdr_path.parent_path() / "SunnySky.ktx2";
 
         EnvironmentBaker baker;
-        const EnvironmentCubemapBakeResult result = baker.bakeFromHdr(hdr_path, 1024);
+        const EnvironmentCubemapBakeResult result = baker.bakeFromHdr(hdr_path, 4096);
         KTXWriter::writeEnvironmentCubemap(result, output_path);
 
         std::cout << "libktx link check passed: " << success_message << std::endl;
