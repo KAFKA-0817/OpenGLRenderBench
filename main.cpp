@@ -75,6 +75,7 @@ int main(int argc, char** argv)
     asset_manager.requestModel(core::ProjectPaths::model("BoomBox.glb"));
     asset_manager.requestModel(core::ProjectPaths::model("TwoSidedPlane\\TwoSidedPlane.gltf"));
     asset_manager.requestModel(core::ProjectPaths::model("MarbleCube\\Cube.gltf"));
+    asset_manager.requestModel(core::ProjectPaths::model("MetalRoughSpheres.glb"));
 
     editor::Scene scene;
     editor::Entity main_light = scene.createEntity();

@@ -49,6 +49,15 @@ namespace {
         }
     }
 
+    bool isImportantDebugMessage(GLenum type, GLenum severity) {
+        if (severity == GL_DEBUG_SEVERITY_HIGH) {
+            return true;
+        }
+
+        return type == GL_DEBUG_TYPE_ERROR ||
+               type == GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR;
+    }
+
     void APIENTRY openglDebugCallback(GLenum source,
                                       GLenum type,
                                       GLuint id,
@@ -59,8 +68,7 @@ namespace {
         (void)length;
         (void)userParam;
 
-        // 过滤notification
-        if (severity == GL_DEBUG_SEVERITY_NOTIFICATION) {
+        if (!isImportantDebugMessage(type, severity)) {
             return;
         }
 
@@ -132,9 +140,16 @@ namespace core {
         glEnable(GL_DEBUG_OUTPUT);
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
         glDebugMessageCallback(openglDebugCallback, nullptr);
+
         glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE,
+                              0, nullptr, GL_FALSE);
+        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_HIGH,
+                              0, nullptr, GL_TRUE);
+        glDebugMessageControl(GL_DONT_CARE, GL_DEBUG_TYPE_ERROR, GL_DONT_CARE,
+                              0, nullptr, GL_TRUE);
+        glDebugMessageControl(GL_DONT_CARE, GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR, GL_DONT_CARE,
                               0, nullptr, GL_TRUE);
 
-        Log::getInstance().write("OpenGL", "Debug output enabled.");
+        Log::getInstance().write("OpenGL", "Debug output enabled for critical messages.");
     }
 }
