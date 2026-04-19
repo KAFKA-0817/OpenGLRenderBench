@@ -114,7 +114,7 @@ int main(int argc, char** argv)
 
     Renderer renderer(900,600);
     renderer.loadBrdfLut(core::ProjectPaths::assets() / "brdf_lut.ktx2");
-    renderer.loadEnvironmentMap(core::ProjectPaths::assets() / "ibl" / "SunnySky" / "SunnySky.ktx2");
+    renderer.loadEnvironmentMap(core::ProjectPaths::assets() / "ibl" / "SunnySky" / "SunnySky_irradiance.ktx2");
     app::EditorCommandsFrame editor_commands_frame;
     RenderContextFrame render_context_frame;
     PerspectiveCamera camera;

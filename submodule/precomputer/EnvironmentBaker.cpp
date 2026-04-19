@@ -4,12 +4,11 @@
 
 #include "EnvironmentBaker.hpp"
 
-#include <array>
+#include <algorithm>
 #include <stdexcept>
 
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
-#include <glm/gtc/constants.hpp>
 #include <stb_image.h>
 
 #include "gl/Shader.hpp"
@@ -61,12 +60,35 @@ namespace {
     };
 }
 
-EnvironmentCubemapBakeResult EnvironmentBaker::bakeFromHdr(const std::filesystem::path& hdr_path, const std::uint32_t face_size) const {
-    if (face_size == 0) {
-        throw std::runtime_error("Environment cubemap face size must be greater than zero.");
+EnvironmentBakeResult EnvironmentBaker::bakeFromHdr(const std::filesystem::path& hdr_path,
+                                                    const std::uint32_t environment_size,
+                                                    const std::uint32_t irradiance_size,
+                                                    const std::uint32_t prefilter_size,
+                                                    const std::uint32_t prefilter_mip_count) const {
+    if (environment_size == 0 || irradiance_size == 0 || prefilter_size == 0 || prefilter_mip_count == 0) {
+        throw std::runtime_error("Environment bake sizes and mip count must be greater than zero.");
     }
 
     const unsigned int hdr_texture = loadHdrTexture(hdr_path);
+    const GpuCubemap environment_gpu = bakeEnvironmentCubemapGpu(hdr_texture, environment_size);
+    const GpuCubemap irradiance_gpu = bakeIrradianceCubemapGpu(environment_gpu.texture, irradiance_size);
+    const GpuCubemap prefilter_gpu = bakePrefilterCubemapGpu(environment_gpu.texture, prefilter_size, prefilter_mip_count);
+
+    EnvironmentBakeResult result;
+    result.environment = readCubemap(environment_gpu.texture, environment_gpu.face_size);
+    result.irradiance = readCubemap(irradiance_gpu.texture, irradiance_gpu.face_size);
+    result.prefilter = readPrefilterCubemap(prefilter_gpu.texture, prefilter_gpu.face_size, prefilter_gpu.mip_count);
+
+    glDeleteTextures(1, &hdr_texture);
+    glDeleteTextures(1, &environment_gpu.texture);
+    glDeleteTextures(1, &irradiance_gpu.texture);
+    glDeleteTextures(1, &prefilter_gpu.texture);
+
+    return result;
+}
+
+EnvironmentBaker::GpuCubemap EnvironmentBaker::bakeEnvironmentCubemapGpu(const unsigned int hdr_texture,
+                                                                         const std::uint32_t face_size) {
     const unsigned int cube_texture = createCubemapTexture(face_size);
     unsigned int depth_rbo = 0;
     const unsigned int framebuffer = createCaptureFramebuffer(face_size, depth_rbo);
@@ -77,18 +99,9 @@ EnvironmentCubemapBakeResult EnvironmentBaker::bakeFromHdr(const std::filesystem
     Shader shader(shader_dir / "equirect_to_cubemap.vert", shader_dir / "equirect_to_cubemap.frag");
     shader.use();
     shader.setInt("uEquirectangularMap", 0);
+    shader.setMat4("uProjection", glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f));
 
-    const glm::mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-    const std::array<glm::mat4, 6> views = {
-        glm::lookAt(glm::vec3(0.0f), glm::vec3(1.0f, 0.0f, 0.0f),  glm::vec3(0.0f, -1.0f, 0.0f)),
-        glm::lookAt(glm::vec3(0.0f), glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
-        glm::lookAt(glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f),  glm::vec3(0.0f, 0.0f, 1.0f)),
-        glm::lookAt(glm::vec3(0.0f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f)),
-        glm::lookAt(glm::vec3(0.0f), glm::vec3(0.0f, 0.0f, 1.0f),  glm::vec3(0.0f, -1.0f, 0.0f)),
-        glm::lookAt(glm::vec3(0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f))
-    };
-
-    shader.setMat4("uProjection", projection);
+    const auto views = captureViews();
 
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
     glViewport(0, 0, static_cast<GLsizei>(face_size), static_cast<GLsizei>(face_size));
@@ -102,14 +115,7 @@ EnvironmentCubemapBakeResult EnvironmentBaker::bakeFromHdr(const std::filesystem
     glBindVertexArray(cube_vao);
 
     for (std::uint32_t face = 0; face < 6; ++face) {
-        glFramebufferTexture2D(
-            GL_FRAMEBUFFER,
-            GL_COLOR_ATTACHMENT0,
-            GL_TEXTURE_CUBE_MAP_POSITIVE_X + face,
-            cube_texture,
-            0
-        );
-
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, cube_texture, 0);
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
             throw std::runtime_error("Environment baker framebuffer is incomplete.");
         }
@@ -122,7 +128,122 @@ EnvironmentCubemapBakeResult EnvironmentBaker::bakeFromHdr(const std::filesystem
 
     glBindVertexArray(0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glDeleteRenderbuffers(1, &depth_rbo);
+    glDeleteFramebuffers(1, &framebuffer);
+    glDeleteBuffers(1, &cube_vbo);
+    glDeleteVertexArrays(1, &cube_vao);
 
+    return {cube_texture, face_size, 1};
+}
+
+EnvironmentBaker::GpuCubemap EnvironmentBaker::bakeIrradianceCubemapGpu(const unsigned int environment_map,
+                                                                        const std::uint32_t face_size) {
+    const unsigned int irradiance_texture = createCubemapTexture(face_size);
+    unsigned int depth_rbo = 0;
+    const unsigned int framebuffer = createCaptureFramebuffer(face_size, depth_rbo);
+    unsigned int cube_vbo = 0;
+    const unsigned int cube_vao = createCubeVao(cube_vbo);
+
+    const std::filesystem::path shader_dir = shaderDirectory();
+    Shader shader(shader_dir / "equirect_to_cubemap.vert", shader_dir / "irradiance_convolution.frag");
+    shader.use();
+    shader.setInt("uEnvironmentMap", 0);
+    shader.setMat4("uProjection", glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f));
+
+    const auto views = captureViews();
+
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+    glViewport(0, 0, static_cast<GLsizei>(face_size), static_cast<GLsizei>(face_size));
+    glDisable(GL_BLEND);
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, environment_map);
+    glBindVertexArray(cube_vao);
+
+    for (std::uint32_t face = 0; face < 6; ++face) {
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, irradiance_texture, 0);
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            throw std::runtime_error("Irradiance baker framebuffer is incomplete.");
+        }
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        shader.setMat4("uView", views[face]);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
+
+    glBindVertexArray(0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glDeleteRenderbuffers(1, &depth_rbo);
+    glDeleteFramebuffers(1, &framebuffer);
+    glDeleteBuffers(1, &cube_vbo);
+    glDeleteVertexArrays(1, &cube_vao);
+
+    return {irradiance_texture, face_size, 1};
+}
+
+EnvironmentBaker::GpuCubemap EnvironmentBaker::bakePrefilterCubemapGpu(const unsigned int environment_map,
+                                                                       const std::uint32_t face_size,
+                                                                       const std::uint32_t mip_count) {
+    const unsigned int prefilter_texture = createCubemapTexture(face_size, mip_count);
+    unsigned int depth_rbo = 0;
+    const unsigned int framebuffer = createCaptureFramebuffer(face_size, depth_rbo);
+    unsigned int cube_vbo = 0;
+    const unsigned int cube_vao = createCubeVao(cube_vbo);
+
+    const std::filesystem::path shader_dir = shaderDirectory();
+    Shader shader(shader_dir / "equirect_to_cubemap.vert", shader_dir / "prefilter_environment.frag");
+    shader.use();
+    shader.setInt("uEnvironmentMap", 0);
+    shader.setMat4("uProjection", glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f));
+
+    const auto views = captureViews();
+
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+    glDisable(GL_BLEND);
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, environment_map);
+    glBindVertexArray(cube_vao);
+
+    for (std::uint32_t mip = 0; mip < mip_count; ++mip) {
+        const std::uint32_t mip_size = std::max(1u, face_size >> mip);
+        const float roughness = mip_count == 1 ? 0.0f : static_cast<float>(mip) / static_cast<float>(mip_count - 1);
+
+        glBindRenderbuffer(GL_RENDERBUFFER, depth_rbo);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, static_cast<GLsizei>(mip_size), static_cast<GLsizei>(mip_size));
+        glViewport(0, 0, static_cast<GLsizei>(mip_size), static_cast<GLsizei>(mip_size));
+
+        shader.setFloat("uRoughness", roughness);
+
+        for (std::uint32_t face = 0; face < 6; ++face) {
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, prefilter_texture, static_cast<GLint>(mip));
+            if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+                throw std::runtime_error("Prefilter baker framebuffer is incomplete.");
+            }
+
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            shader.setMat4("uView", views[face]);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
+    }
+
+    glBindVertexArray(0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glDeleteRenderbuffers(1, &depth_rbo);
+    glDeleteFramebuffers(1, &framebuffer);
+    glDeleteBuffers(1, &cube_vbo);
+    glDeleteVertexArrays(1, &cube_vao);
+
+    return {prefilter_texture, face_size, mip_count};
+}
+
+EnvironmentCubemapBakeResult EnvironmentBaker::readCubemap(const unsigned int cubemap, const std::uint32_t face_size) {
     EnvironmentCubemapBakeResult result;
     result.face_size = face_size;
     result.pixels_rgba32f.resize(
@@ -132,20 +253,46 @@ EnvironmentCubemapBakeResult EnvironmentBaker::bakeFromHdr(const std::filesystem
         0.0f
     );
 
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cube_texture);
-    const std::size_t face_pixel_count = static_cast<std::size_t>(face_size) * static_cast<std::size_t>(face_size) * 4u;
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap);
+    const std::size_t face_pixel_count =
+        static_cast<std::size_t>(face_size) * static_cast<std::size_t>(face_size) * 4u;
     for (std::uint32_t face = 0; face < 6; ++face) {
         float* face_pixels = result.pixels_rgba32f.data() + face * face_pixel_count;
         glGetTexImage(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, 0, GL_RGBA, GL_FLOAT, face_pixels);
     }
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
-    glDeleteTextures(1, &hdr_texture);
-    glDeleteTextures(1, &cube_texture);
-    glDeleteRenderbuffers(1, &depth_rbo);
-    glDeleteFramebuffers(1, &framebuffer);
-    glDeleteBuffers(1, &cube_vbo);
-    glDeleteVertexArrays(1, &cube_vao);
+    return result;
+}
+
+PrefilterCubemapBakeResult EnvironmentBaker::readPrefilterCubemap(const unsigned int cubemap,
+                                                                  const std::uint32_t base_face_size,
+                                                                  const std::uint32_t mip_count) {
+    PrefilterCubemapBakeResult result;
+    result.base_face_size = base_face_size;
+    result.mip_count = mip_count;
+    result.mips.resize(mip_count);
+
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap);
+    for (std::uint32_t mip = 0; mip < mip_count; ++mip) {
+        const std::uint32_t mip_size = std::max(1u, base_face_size >> mip);
+        auto& mip_result = result.mips[mip];
+        mip_result.face_size = mip_size;
+        mip_result.pixels_rgba32f.resize(
+            static_cast<std::size_t>(mip_size) *
+            static_cast<std::size_t>(mip_size) *
+            6u * 4u,
+            0.0f
+        );
+
+        const std::size_t face_pixel_count =
+            static_cast<std::size_t>(mip_size) * static_cast<std::size_t>(mip_size) * 4u;
+        for (std::uint32_t face = 0; face < 6; ++face) {
+            float* face_pixels = mip_result.pixels_rgba32f.data() + face * face_pixel_count;
+            glGetTexImage(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, static_cast<GLint>(mip), GL_RGBA, GL_FLOAT, face_pixels);
+        }
+    }
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
     return result;
 }
@@ -190,17 +337,7 @@ unsigned int EnvironmentBaker::loadHdrTexture(const std::filesystem::path& hdr_p
     unsigned int texture = 0;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(
-        GL_TEXTURE_2D,
-        0,
-        internal_format,
-        width,
-        height,
-        0,
-        format,
-        GL_FLOAT,
-        pixels
-    );
+    glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, GL_FLOAT, pixels);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -211,28 +348,33 @@ unsigned int EnvironmentBaker::loadHdrTexture(const std::filesystem::path& hdr_p
     return texture;
 }
 
-unsigned int EnvironmentBaker::createCubemapTexture(const std::uint32_t face_size) {
+unsigned int EnvironmentBaker::createCubemapTexture(const std::uint32_t face_size, const std::uint32_t mip_count) {
     unsigned int texture = 0;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
-    for (unsigned int face = 0; face < 6; ++face) {
-        glTexImage2D(
-            GL_TEXTURE_CUBE_MAP_POSITIVE_X + face,
-            0,
-            GL_RGBA16F,
-            static_cast<GLsizei>(face_size),
-            static_cast<GLsizei>(face_size),
-            0,
-            GL_RGBA,
-            GL_FLOAT,
-            nullptr
-        );
+    for (std::uint32_t mip = 0; mip < mip_count; ++mip) {
+        const std::uint32_t mip_size = std::max(1u, face_size >> mip);
+        for (std::uint32_t face = 0; face < 6; ++face) {
+            glTexImage2D(
+                GL_TEXTURE_CUBE_MAP_POSITIVE_X + face,
+                static_cast<GLint>(mip),
+                GL_RGBA16F,
+                static_cast<GLsizei>(mip_size),
+                static_cast<GLsizei>(mip_size),
+                0,
+                GL_RGBA,
+                GL_FLOAT,
+                nullptr
+            );
+        }
     }
 
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, 0);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, static_cast<GLint>(mip_count - 1));
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, mip_count > 1 ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
@@ -272,6 +414,17 @@ unsigned int EnvironmentBaker::createCubeVao(unsigned int& vertex_buffer) {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     return vao;
+}
+
+std::array<glm::mat4, 6> EnvironmentBaker::captureViews() {
+    return {
+        glm::lookAt(glm::vec3(0.0f), glm::vec3(1.0f, 0.0f, 0.0f),  glm::vec3(0.0f, -1.0f, 0.0f)),
+        glm::lookAt(glm::vec3(0.0f), glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
+        glm::lookAt(glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f),  glm::vec3(0.0f, 0.0f, 1.0f)),
+        glm::lookAt(glm::vec3(0.0f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f)),
+        glm::lookAt(glm::vec3(0.0f), glm::vec3(0.0f, 0.0f, 1.0f),  glm::vec3(0.0f, -1.0f, 0.0f)),
+        glm::lookAt(glm::vec3(0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f))
+    };
 }
 
 std::filesystem::path EnvironmentBaker::shaderDirectory() {

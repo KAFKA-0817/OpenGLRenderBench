@@ -26,6 +26,14 @@ add_executable(Precomputer
         gl/Shader.hpp
         gl/Shader.cpp
         file_io.hpp
+        shader/brdf_lut.vert
+        shader/brdf_lut.frag
+        shader/equirect_to_cubemap.vert
+        shader/equirect_to_cubemap.frag
+        shader/irradiance_convolution.frag
+        shader/prefilter_environment.frag
+        shader/preview.vert
+        shader/preview.frag
 )
 
 target_link_libraries(Precomputer PRIVATE
