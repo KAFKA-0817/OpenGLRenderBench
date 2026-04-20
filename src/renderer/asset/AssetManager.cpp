@@ -4,6 +4,7 @@
 
 #include "AssetManager.hpp"
 
+#include "../../core/Log.hpp"
 #include "importer/GltfImporter.hpp"
 #include "importer/RuntimeAssetBuilder.hpp"
 
@@ -112,10 +113,13 @@ namespace renderer {
         for (auto& [key, imported] : pending) {
             auto model = RuntimeAssetBuilder::buildFromImported(imported);
 
-            std::lock_guard lock(model_cache_mutex_);
-            auto& record = model_cache_[key];
-            record.state = ModelState::Ready;
-            record.model = std::make_unique<Model>(std::move(model));
+            {
+                std::lock_guard lock(model_cache_mutex_);
+                auto& record = model_cache_[key];
+                record.state = ModelState::Ready;
+                record.model = std::make_unique<Model>(std::move(model));
+            }
+            core::Log::getInstance().write("AssetManger","Loaded model: "+key);
         }
     }
 } // renderer
