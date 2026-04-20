@@ -6,7 +6,9 @@
 #include "src/renderer/asset/Model.hpp"
 #include "src/core/opengl.hpp"
 #include "src/core/path.hpp"
+#include "src/core/FileDialog.hpp"
 #include "src/core/DirectoryWatcher.hpp"
+#include "src/core/Log.hpp"
 #include "src/editor/scene/RenderSystem.hpp"
 #include "src/editor/scene/LightSystem.hpp"
 #include "src/editor/scene/Scene.hpp"
@@ -160,6 +162,13 @@ int main(int argc, char** argv)
         editor_commands_frame.beginFrame();
         render_context_frame.beginFrame();
         editor_ui.draw();
+
+        if (editor_commands_frame.commands().open_model) {
+            if (auto path = core::FileDialog::openGltfModel()) {
+                asset_manager.requestModel(*path);
+                core::Log::getInstance().write("Asset", "Requested model: " + path->string());
+            }
+        }
 
         if (editor_commands_frame.commands().reload_shaders) {
             renderer.reloadBuiltinShaders();

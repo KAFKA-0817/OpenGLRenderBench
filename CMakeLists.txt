@@ -25,6 +25,8 @@ add_executable(OpenGLRenderBench main.cpp
         src/renderer/asset/Mesh.cpp
         src/renderer/asset/Mesh.hpp
         src/core/opengl.hpp
+        src/core/FileDialog.cpp
+        src/core/FileDialog.hpp
         src/renderer/asset/Model.cpp
         src/renderer/asset/Model.hpp
         src/renderer/asset/PrimitiveFactory.cpp
@@ -123,4 +125,5 @@ target_link_libraries(OpenGLRenderBench PRIVATE
         imgui
         imguizmo
         KTX::ktx
+        comdlg32
 )

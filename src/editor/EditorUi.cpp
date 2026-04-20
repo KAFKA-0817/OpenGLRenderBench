@@ -528,6 +528,12 @@ namespace editor {
         }
 
         if (ImGui::BeginMenuBar()) {
+            if (ImGui::BeginMenu("File")) {
+                if (ImGui::MenuItem("Open Model...")) {
+                    commands_frame_.writable().open_model = true;
+                }
+                ImGui::EndMenu();
+            }
             if (ImGui::BeginMenu("Window")) {
                 ImGui::MenuItem("Renderer", nullptr, &state_.show_renderer);
                 ImGui::MenuItem("Hierarchy", nullptr, &state_.show_hierarchy);
