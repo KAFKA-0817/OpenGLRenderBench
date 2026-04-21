@@ -113,6 +113,8 @@ add_executable(OpenGLRenderBench main.cpp
         src/renderer/pipeline/ShadowPass.hpp
         src/renderer/pipeline/SkyboxPass.cpp
         src/renderer/pipeline/SkyboxPass.hpp
+        src/app/Application.cpp
+        src/app/Application.hpp
 )
 
 target_link_libraries(OpenGLRenderBench PRIVATE
